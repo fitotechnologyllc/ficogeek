@@ -1,7 +1,11 @@
 import { FieldValue, Timestamp } from "firebase/firestore";
 import { z } from "zod";
 
-export type UserRole = "personal" | "pro" | "admin";
+export type UserRole = "personal" | "pro" | "admin" | "owner";
+export type AccountType = "customer" | "internal";
+export type PromoDuration = "7_days" | "14_days" | "30_days" | "unlimited";
+export type PromoStatus = "active" | "inactive" | "archived" | "expired";
+export type RedemptionStatus = "active" | "expired" | "revoked";
 
 // --- ZOD SCHEMAS FOR VALIDATION ---
 
@@ -9,11 +13,15 @@ export const UserProfileSchema = z.object({
   id: z.string(),
   name: z.string().min(2).max(100),
   email: z.string().email(),
-  role: z.enum(["personal", "pro", "admin"]),
+  role: z.enum(["personal", "pro", "admin", "owner"]),
   status: z.enum(["Active", "Suspended"]),
   createdAt: z.string(),
   updatedAt: z.string(),
-  subscriptionPlan: z.enum(["free", "premium", "pro"]).optional(),
+  subscriptionPlan: z.enum(["free", "premium", "pro", "owner_unlimited"]).optional(),
+  subscriptionStatus: z.string().optional(),
+  accountType: z.enum(["customer", "internal"]).optional(),
+  billingBypass: z.boolean().optional(),
+  usageBypass: z.boolean().optional(),
   isPartner: z.boolean().optional(),
 });
 
@@ -60,6 +68,58 @@ export const LetterSchema = z.object({
   }),
   createdAt: z.string(),
   updatedAt: z.string(),
+});
+
+export const AIConversationSchema = z.object({
+  ownerUID: z.string(),
+  title: z.string().optional(),
+  status: z.enum(["active", "archived"]),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const AIMessageSchema = z.object({
+  conversationId: z.string(),
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string(),
+  createdAt: z.string(),
+});
+
+export const AIDisputeIntakeSchema = z.object({
+  ownerUID: z.string(),
+  clientId: z.string().optional(), // For Pros
+  conversationId: z.string(),
+  status: z.enum(["draft", "completed"]),
+  data: z.object({
+    fullName: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().optional(),
+    bureaus: z.array(z.string()).optional(),
+    itemType: z.string().optional(),
+    creditorName: z.string().optional(),
+    accountNumber: z.string().optional(),
+    isMasked: z.boolean().default(true),
+    reason: z.string().optional(),
+    resolution: z.string().optional(),
+    dates: z.string().optional(),
+    hasDocuments: z.boolean().default(false),
+    documentNotes: z.string().optional(),
+  }),
+  completionPercent: z.number().default(0),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const AIKnowledgeSchema = z.object({
+  category: z.string(),
+  question: z.string(),
+  answer: z.string(),
+  tags: z.array(z.string()).optional(),
+  lastUpdated: z.string(),
 });
 
 // --- INTERFACES (Derived or Manual) ---
@@ -135,6 +195,44 @@ export interface CouponCode {
   createdAt: string;
 }
 
+export interface PromoCode {
+  id?: string;
+  code: string; // The user-facing code (e.g. SAVE100)
+  normalizedCode: string; // uppercase for quick search
+  status: PromoStatus;
+  accessType: "PLAN" | "FEATURE_BUNDLE";
+  targetPlan?: "premium" | "pro";
+  targetFeatures?: string[];
+  durationType: PromoDuration;
+  durationDays?: number;
+  isUnlimitedDuration: boolean;
+  startsAt: string;
+  expiresAt: string;
+  maxRedemptions: number;
+  redemptionCount: number;
+  perUserLimit: number;
+  notes?: string;
+  createdByUID: string;
+  updatedByUID: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PromoRedemption {
+  id?: string;
+  promoCodeId: string;
+  code: string;
+  redeemedByUID: string;
+  redeemedAt: string;
+  grantedPlan: string;
+  grantedFeatures: string[];
+  startsAt: string;
+  endsAt: string | null; // null if unlimited
+  status: RedemptionStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type DisputeStatus = 
   | "Draft" 
   | "In Review" 
@@ -176,6 +274,26 @@ export interface LetterTemplate {
 }
 
 export interface Letter extends z.infer<typeof LetterSchema> {
+  id?: string;
+  aiGenerated?: boolean;
+  intakeId?: string;
+  isDraft?: boolean;
+  refinedByAI?: boolean;
+}
+
+export interface AIConversation extends z.infer<typeof AIConversationSchema> {
+  id?: string;
+}
+
+export interface AIMessage extends z.infer<typeof AIMessageSchema> {
+  id?: string;
+}
+
+export interface AIDisputeIntake extends z.infer<typeof AIDisputeIntakeSchema> {
+  id?: string;
+}
+
+export interface AIKnowledge extends z.infer<typeof AIKnowledgeSchema> {
   id?: string;
 }
 

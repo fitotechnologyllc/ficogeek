@@ -17,11 +17,19 @@ service cloud.firestore {
       return isSignedIn() && getProfile().role == 'admin';
     }
 
+    function isOwnerRole() {
+      return isSignedIn() && getProfile().role == 'owner';
+    }
+
+    function isAdminOrOwner() {
+      return isAdmin() || isOwnerRole();
+    }
+
     function isPro() {
       return isSignedIn() && getProfile().role == 'pro';
     }
 
-    function isOwner(uid) {
+    function isDocOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
 
@@ -32,138 +40,183 @@ service cloud.firestore {
 
     // --- COLLECTIONS ---
 
-    // Profiles: Users can read/write their own, but can't elevate role or status
     match /profiles/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
-      allow create: if isSignedIn() && isOwner(userId) && 
+      allow read: if isSignedIn() && (isDocOwner(userId) || isAdminOrOwner());
+      allow create: if isSignedIn() && isDocOwner(userId) && 
                       (request.resource.data.role == 'personal' || request.resource.data.role == 'pro') && 
                       request.resource.data.status == 'Active';
       allow update: if isSignedIn() && (
-                      (isOwner(userId) && 
+                      (isDocOwner(userId) && 
                        isUnchanged('role') && 
                        isUnchanged('status') && 
                        isUnchanged('isPartner')) || 
-                      isAdmin()
+                      isAdminOrOwner()
                     );
-      allow delete: if isAdmin();
+      allow delete: if isAdminOrOwner();
     }
 
-    // Disputes: Personal users access own, Pros access own + clients
     match /disputes/{disputeId} {
       allow read: if isSignedIn() && (
         resource.data.ownerUID == request.auth.uid || 
         resource.data.proUID == request.auth.uid ||
-        isAdmin()
+        isAdminOrOwner()
       );
       allow create: if isSignedIn() && (
         request.resource.data.ownerUID == request.auth.uid || 
-        (isPro() && request.resource.data.proUID == request.auth.uid)
+        (isPro() && request.resource.data.proUID == request.auth.uid) ||
+        isOwnerRole()
       );
       allow update: if isSignedIn() && (
         (resource.data.ownerUID == request.auth.uid && isUnchanged('ownerUID') && isUnchanged('proUID')) || 
         (resource.data.proUID == request.auth.uid && isUnchanged('proUID') && isUnchanged('ownerUID')) ||
-        isAdmin()
+        isAdminOrOwner()
       );
       allow delete: if isSignedIn() && (
         resource.data.ownerUID == request.auth.uid || 
-        isAdmin()
+        isAdminOrOwner()
       );
     }
 
-    // Documents: Strict privacy policy
     match /documents/{docId} {
       allow read: if isSignedIn() && (
         resource.data.ownerUID == request.auth.uid || 
         resource.data.proUID == request.auth.uid ||
-        isAdmin()
+        isAdminOrOwner()
       );
       allow create: if isSignedIn() && (
         request.resource.data.ownerUID == request.auth.uid || 
-        (isPro() && request.resource.data.proUID == request.auth.uid)
+        (isPro() && request.resource.data.proUID == request.auth.uid) ||
+        isOwnerRole()
       );
       allow update: if isSignedIn() && (
         (resource.data.ownerUID == request.auth.uid && isUnchanged('ownerUID')) || 
         (resource.data.proUID == request.auth.uid && isUnchanged('proUID')) ||
-        isAdmin()
+        isAdminOrOwner()
       );
-      allow delete: if isSignedIn() && (resource.data.ownerUID == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.ownerUID == request.auth.uid || isAdminOrOwner());
     }
 
-    // Clients: Exclusive to assigned Pro
     match /clients/{clientId} {
-      allow read: if isSignedIn() && (resource.data.proUID == request.auth.uid || isAdmin());
-      allow create: if isPro() && request.resource.data.proUID == request.auth.uid;
-      allow update: if (isPro() && resource.data.proUID == request.auth.uid && isUnchanged('proUID')) || isAdmin();
-      allow delete: if isAdmin();
+      allow read: if isSignedIn() && (resource.data.proUID == request.auth.uid || isAdminOrOwner());
+      allow create: if (isPro() && request.resource.data.proUID == request.auth.uid) || isOwnerRole();
+      allow update: if (isPro() && resource.data.proUID == request.auth.uid && isUnchanged('proUID')) || isAdminOrOwner();
+      allow delete: if isAdminOrOwner();
     }
 
-    // Letters: Ledger for generated dispute letters
     match /letters/{letterId} {
       allow read: if isSignedIn() && (
         resource.data.ownerUID == request.auth.uid || 
         resource.data.proUID == request.auth.uid ||
-        isAdmin()
+        isAdminOrOwner()
       );
       allow create: if isSignedIn() && (
         request.resource.data.ownerUID == request.auth.uid || 
-        (isPro() && request.resource.data.proUID == request.auth.uid)
+        (isPro() && request.resource.data.proUID == request.auth.uid) ||
+        isOwnerRole()
       );
       allow update: if isSignedIn() && (
         (resource.data.ownerUID == request.auth.uid && isUnchanged('ownerUID')) || 
         (resource.data.proUID == request.auth.uid && isUnchanged('proUID')) ||
-        isAdmin()
+        isAdminOrOwner()
       );
-      allow delete: if isAdmin();
+      allow delete: if isAdminOrOwner();
     }
 
-    // Templates: Institutional knowledge base
     match /templates/{templateId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isAdminOrOwner();
     }
 
-    // Audit Logs: Immutable ledger
     match /audit_logs/{logId} {
-      allow read: if isAdmin();
+      allow read: if isAdminOrOwner();
       allow create: if isSignedIn() && 
                     request.resource.data.actorUID == request.auth.uid &&
                     request.resource.data.timestamp == request.time;
-      allow update, delete: if false; // Immutable logs
+      allow update, delete: if false; 
     }
 
-    // --- PARTNER & AFFILIATE PROGRAM ---
+    match /promo_codes/{promoId} {
+      allow read: if isSignedIn();
+      allow write: if isAdminOrOwner();
+    }
+
+    match /promo_redemptions/{redemptionId} {
+      allow read: if isSignedIn() && (isDocOwner(redemptionId.split('_')[0]) || isAdminOrOwner());
+      allow write: if false; // Managed by server action
+    }
 
     match /partners/{partnerId} {
-      allow read: if isSignedIn() && (isOwner(partnerId) || isAdmin());
-      allow create: if isSignedIn() && isOwner(partnerId);
-      allow update: if isAdmin();
+      allow read: if isSignedIn() && (isDocOwner(partnerId) || isAdminOrOwner());
+      allow create: if isSignedIn() && isDocOwner(partnerId);
+      allow update: if isAdminOrOwner();
     }
 
     match /referrals/{referralId} {
-      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdmin());
+      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdminOrOwner());
       allow create: if isSignedIn();
-      allow update: if isAdmin();
+      allow update: if isAdminOrOwner();
     }
 
     match /commissions/{commissionId} {
-      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdmin());
-      allow write: if isAdmin();
+      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdminOrOwner());
+      allow write: if isAdminOrOwner();
     }
 
     match /payouts/{payoutId} {
-      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdmin());
+      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdminOrOwner());
       allow create: if isSignedIn() && request.resource.data.partnerUID == request.auth.uid;
-      allow update: if isAdmin();
+      allow update: if isAdminOrOwner();
     }
 
     match /coupon_codes/{codeId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isAdminOrOwner();
     }
     
     match /referral_clicks/{clickId} {
-      allow read: if isAdmin();
+      allow read: if isAdminOrOwner();
       allow create: if true;
+    }
+
+    match /ai_conversations/{convId} {
+      allow read: if isSignedIn() && (resource.data.ownerUID == request.auth.uid || isAdminOrOwner());
+      allow create: if isSignedIn() && (request.resource.data.ownerUID == request.auth.uid || isOwnerRole());
+      allow update: if isSignedIn() && (resource.data.ownerUID == request.auth.uid || isAdminOrOwner());
+      allow delete: if isSignedIn() && (resource.data.ownerUID == request.auth.uid || isAdminOrOwner());
+    }
+
+    match /ai_messages/{msgId} {
+      allow read: if isSignedIn() && (
+        get(/databases/$(database)/documents/ai_conversations/$(resource.data.conversationId)).data.ownerUID == request.auth.uid || 
+        isAdminOrOwner()
+      );
+      allow create: if isSignedIn() && (
+        get(/databases/$(database)/documents/ai_conversations/$(request.resource.data.conversationId)).data.ownerUID == request.auth.uid ||
+        isOwnerRole()
+      );
+    }
+
+    match /ai_dispute_intakes/{intakeId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUID == request.auth.uid || 
+        resource.data.proUID == request.auth.uid || 
+        isAdminOrOwner()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.ownerUID == request.auth.uid || 
+        (isPro() && request.resource.data.proUID == request.auth.uid) ||
+        isOwnerRole()
+      );
+      allow update: if isSignedIn() && (
+        resource.data.ownerUID == request.auth.uid || 
+        resource.data.proUID == request.auth.uid || 
+        isAdminOrOwner()
+      );
+    }
+
+    match /ai_knowledge/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdminOrOwner();
     }
   }
 }

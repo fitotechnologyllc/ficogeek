@@ -16,7 +16,12 @@ export type AuditAction =
   | "CLIENT_CREATED"
   | "CLIENT_EDITED"
   | "ADMIN_MODERATION"
-  | "SENSITIVE_RECORD_UPDATE";
+  | "SENSITIVE_RECORD_UPDATE"
+  | "PROMO_CREATED"
+  | "PROMO_EDITED"
+  | "PROMO_REDEEMED"
+  | "PROMO_REVOKED"
+  | "ROLE_ASSIGNED";
 
 export const logAuditAction = async (
   userId: string,

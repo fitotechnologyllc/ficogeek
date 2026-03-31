@@ -11,6 +11,9 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isPro: boolean;
+  isOwner: boolean;
+  isInternal: boolean;
+  isAdminOrOwner: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,6 +22,9 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAdmin: false,
   isPro: false,
+  isOwner: false,
+  isInternal: false,
+  isAdminOrOwner: false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -46,9 +52,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isAdmin = profile?.role === "admin";
   const isPro = profile?.role === "pro";
+  const isOwner = profile?.role === "owner";
+  const isInternal = profile?.accountType === "internal" || isOwner;
+  const isAdminOrOwner = isAdmin || isOwner;
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin, isPro }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      isAdmin, 
+      isPro, 
+      isOwner, 
+      isInternal, 
+      isAdminOrOwner 
+    }}>
       {children}
     </AuthContext.Provider>
   );

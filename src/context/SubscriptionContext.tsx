@@ -4,6 +4,10 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { upgradeSubscriptionAction } from "@/app/actions/subscription";
 import { logAuditAction } from "@/lib/audit";
+import { getEntitlements, UserEntitlements } from "@/lib/entitlements";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, limit, onSnapshot } from "firebase/firestore";
+import { PromoRedemption } from "@/lib/schema";
 
 type PlanType = "free" | "premium" | "pro";
 
@@ -44,9 +48,10 @@ const PLAN_LIMITS: Record<PlanType, PlanCapabilities> = {
 };
 
 interface SubscriptionContextType {
-  plan: PlanType;
-  capabilities: PlanCapabilities;
-  isUpgradeRequired: (feature: keyof PlanCapabilities, currentCount?: number) => boolean;
+  plan: PlanType | "owner_unlimited";
+  capabilities: UserEntitlements;
+  activeRedemption: PromoRedemption | null;
+  isUpgradeRequired: (feature: keyof UserEntitlements, currentCount?: number) => boolean;
   upgradePlan: (newPlan: PlanType) => Promise<void>;
   loading: boolean;
 }
@@ -54,21 +59,43 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile } = useAuth();
-  const [plan, setPlan] = useState<PlanType>("free");
+  const { profile, user } = useAuth();
+  const [activeRedemption, setActiveRedemption] = useState<PromoRedemption | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile?.subscriptionPlan) {
-      setPlan(profile.subscriptionPlan as PlanType);
+    if (!user) {
+      setActiveRedemption(null);
+      setLoading(false);
+      return;
     }
-    setLoading(false);
-  }, [profile]);
 
-  const capabilities = PLAN_LIMITS[plan];
+    // Subscribe to active promo redemptions
+    const q = query(
+      collection(db, "promo_redemptions"),
+      where("redeemedByUID", "==", user.uid),
+      where("status", "==", "active"),
+      limit(1)
+    );
 
-  const isUpgradeRequired = (feature: keyof PlanCapabilities, currentCount: number = 0) => {
-    const limit = capabilities[feature];
+    const unsubscribe = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        setActiveRedemption({ id: snap.docs[0].id, ...snap.docs[0].data() } as PromoRedemption);
+      } else {
+        setActiveRedemption(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const capabilities = getEntitlements(profile, activeRedemption);
+  const plan = capabilities.plan;
+
+  const isUpgradeRequired = (feature: keyof UserEntitlements, currentCount: number = 0) => {
+    // Owner bypass is already handled by getEntitlements returning high limits
+    const limit = (capabilities as any)[feature];
     if (typeof limit === "number") {
       return currentCount >= limit;
     }
@@ -82,16 +109,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!profile) return;
     
     try {
-      // 1. Trigger Server Action for secure backend transaction
       const result = await upgradeSubscriptionAction(profile.uid, newPlan as "premium" | "pro");
-      
-      if (!result.success) {
-        throw new Error(result.error || "Server-side upgrade failed");
-      }
+      if (!result.success) throw new Error(result.error || "Server-side upgrade failed");
 
-      setPlan(newPlan);
-
-      // 2. Audit Log for Plan Upgrade
       await logAuditAction(
         profile.uid,
         profile.name,
@@ -101,7 +121,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         "SUBSCRIPTION",
         profile.uid
       );
-
     } catch (e) {
       console.error("Failed to upgrade plan securely", e);
       throw e;
@@ -109,7 +128,14 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   return (
-    <SubscriptionContext.Provider value={{ plan, capabilities, isUpgradeRequired, upgradePlan, loading }}>
+    <SubscriptionContext.Provider value={{ 
+      plan, 
+      capabilities, 
+      activeRedemption,
+      isUpgradeRequired, 
+      upgradePlan, 
+      loading 
+    }}>
       {children}
     </SubscriptionContext.Provider>
   );
