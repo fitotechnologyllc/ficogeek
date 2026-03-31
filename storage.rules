@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // --- HELPERS ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // --- NAMESPACED RULES ---
+
+    // User Personal Documents & Evidence
+    match /documents/{userId}/{allPaths=**} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isAdmin()
+      );
+      allow write: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isAdmin()
+      ) && 
+      request.resource.size < 10 * 1024 * 1024 && // 10MB quota
+      request.resource.contentType.matches('image/.*|application/pdf');
+      
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Dispute Letters (PDF only)
+    match /letters/{userId}/{allPaths=**} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isAdmin()
+      );
+      allow write: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isAdmin()
+      ) && 
+      request.resource.size < 5 * 1024 * 1024 && // 5MB quota
+      request.resource.contentType == 'application/pdf';
+      
+      allow delete: if isAdmin(); // Sensitive records require admin review to delete
+    }
+
+    // Pro-Client Workplace
+    match /pros/{proUID}/clients/{clientId}/{allPaths=**} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == proUID || 
+        isAdmin()
+      );
+      allow write: if isSignedIn() && (
+        request.auth.uid == proUID || 
+        isAdmin()
+      ) && 
+      request.resource.size < 15 * 1024 * 1024 && // 15MB quota for Pro uploads
+      request.resource.contentType.matches('image/.*|application/pdf');
+
+      allow delete: if isSignedIn() && (request.auth.uid == proUID || isAdmin());
+    }
+
+    // Public Assets: Brand assets, icons, public templates
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 248, 250, 252;
+  --background-end-rgb: 249, 249, 255;
+  --primary-navy: #000615;
+  --primary-navy-muted: #0B1F3A;
+  --accent-blue: #2F80ED;
+  --accent-teal: #2DD4BF;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 6, 21;
+    --background-end-rgb: 11, 31, 58;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl;
+  }
+  
+  .premium-card {
+    @apply bg-white shadow-xl shadow-slate-200/50 rounded-2xl border-none transition-all duration-300 hover:shadow-2xl hover:shadow-slate-300/60;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-navy to-primary-navy-muted text-white px-6 py-2.5 rounded-xl font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary-navy/10;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-primary-navy border border-slate-200 px-6 py-2.5 rounded-xl font-medium transition-all hover:bg-slate-50 active:scale-[0.98];
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-blue to-secondary-teal;
+  }
+}

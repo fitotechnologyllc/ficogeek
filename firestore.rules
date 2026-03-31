@@ -1,0 +1,169 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- HIGHER ORDER HELPERS ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getProfile() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getProfile().role == 'admin';
+    }
+
+    function isPro() {
+      return isSignedIn() && getProfile().role == 'pro';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // FIELD VALIDATION HELPERS
+    function isUnchanged(field) {
+      return !(field in request.resource.data) || (field in resource.data && request.resource.data[field] == resource.data[field]);
+    }
+
+    // --- COLLECTIONS ---
+
+    // Profiles: Users can read/write their own, but can't elevate role or status
+    match /profiles/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow create: if isSignedIn() && isOwner(userId) && 
+                      (request.resource.data.role == 'personal' || request.resource.data.role == 'pro') && 
+                      request.resource.data.status == 'Active';
+      allow update: if isSignedIn() && (
+                      (isOwner(userId) && 
+                       isUnchanged('role') && 
+                       isUnchanged('status') && 
+                       isUnchanged('isPartner')) || 
+                      isAdmin()
+                    );
+      allow delete: if isAdmin();
+    }
+
+    // Disputes: Personal users access own, Pros access own + clients
+    match /disputes/{disputeId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUID == request.auth.uid || 
+        resource.data.proUID == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.ownerUID == request.auth.uid || 
+        (isPro() && request.resource.data.proUID == request.auth.uid)
+      );
+      allow update: if isSignedIn() && (
+        (resource.data.ownerUID == request.auth.uid && isUnchanged('ownerUID') && isUnchanged('proUID')) || 
+        (resource.data.proUID == request.auth.uid && isUnchanged('proUID') && isUnchanged('ownerUID')) ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.ownerUID == request.auth.uid || 
+        isAdmin()
+      );
+    }
+
+    // Documents: Strict privacy policy
+    match /documents/{docId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUID == request.auth.uid || 
+        resource.data.proUID == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.ownerUID == request.auth.uid || 
+        (isPro() && request.resource.data.proUID == request.auth.uid)
+      );
+      allow update: if isSignedIn() && (
+        (resource.data.ownerUID == request.auth.uid && isUnchanged('ownerUID')) || 
+        (resource.data.proUID == request.auth.uid && isUnchanged('proUID')) ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (resource.data.ownerUID == request.auth.uid || isAdmin());
+    }
+
+    // Clients: Exclusive to assigned Pro
+    match /clients/{clientId} {
+      allow read: if isSignedIn() && (resource.data.proUID == request.auth.uid || isAdmin());
+      allow create: if isPro() && request.resource.data.proUID == request.auth.uid;
+      allow update: if (isPro() && resource.data.proUID == request.auth.uid && isUnchanged('proUID')) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Letters: Ledger for generated dispute letters
+    match /letters/{letterId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUID == request.auth.uid || 
+        resource.data.proUID == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.ownerUID == request.auth.uid || 
+        (isPro() && request.resource.data.proUID == request.auth.uid)
+      );
+      allow update: if isSignedIn() && (
+        (resource.data.ownerUID == request.auth.uid && isUnchanged('ownerUID')) || 
+        (resource.data.proUID == request.auth.uid && isUnchanged('proUID')) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Templates: Institutional knowledge base
+    match /templates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Audit Logs: Immutable ledger
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && 
+                    request.resource.data.actorUID == request.auth.uid &&
+                    request.resource.data.timestamp == request.time;
+      allow update, delete: if false; // Immutable logs
+    }
+
+    // --- PARTNER & AFFILIATE PROGRAM ---
+
+    match /partners/{partnerId} {
+      allow read: if isSignedIn() && (isOwner(partnerId) || isAdmin());
+      allow create: if isSignedIn() && isOwner(partnerId);
+      allow update: if isAdmin();
+    }
+
+    match /referrals/{referralId} {
+      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+    }
+
+    match /commissions/{commissionId} {
+      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /payouts/{payoutId} {
+      allow read: if isSignedIn() && (resource.data.partnerUID == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.partnerUID == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /coupon_codes/{codeId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    match /referral_clicks/{clickId} {
+      allow read: if isAdmin();
+      allow create: if true;
+    }
+  }
+}
