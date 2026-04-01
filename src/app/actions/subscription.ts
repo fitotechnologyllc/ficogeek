@@ -1,18 +1,15 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase-admin";
-import { UserProfileSchema } from "@/lib/schema";
+import { db } from "@/lib/firebase-admin";
 import { revalidatePath } from "next/cache";
+import * as admin from "firebase-admin";
 
 export async function upgradeSubscriptionAction(userId: string, newPlan: "premium" | "pro") {
-    // 1. Verify User Session (In a real app, use auth() from next-auth or firebase-admin)
-    // For now, we assume userId is passed securely or validated via token
-    
     const amountPaid = newPlan === "premium" ? 29 : newPlan === "pro" ? 99 : 0;
     
     try {
-        await adminDb.runTransaction(async (transaction) => {
-            const userRef = adminDb.collection("profiles").doc(userId);
+        await db.runTransaction(async (transaction) => {
+            const userRef = db.collection("profiles").doc(userId);
             const userDoc = await transaction.get(userRef);
             
             if (!userDoc.exists) throw new Error("User not found");
@@ -24,7 +21,7 @@ export async function upgradeSubscriptionAction(userId: string, newPlan: "premiu
             });
 
             // 2. Handle Referral Logic
-            const referralSnap = await adminDb.collection("referrals")
+            const referralSnap = await db.collection("referrals")
                 .where("referredUserUID", "==", userId)
                 .limit(1)
                 .get();
@@ -32,7 +29,7 @@ export async function upgradeSubscriptionAction(userId: string, newPlan: "premiu
             if (!referralSnap.empty && amountPaid > 0) {
                 const referralDoc = referralSnap.docs[0];
                 const partnerUID = referralDoc.data().partnerUID;
-                const partnerRef = adminDb.collection("partners").doc(partnerUID);
+                const partnerRef = db.collection("partners").doc(partnerUID);
                 const partnerDoc = await transaction.get(partnerRef);
 
                 if (partnerDoc.exists) {
@@ -41,7 +38,7 @@ export async function upgradeSubscriptionAction(userId: string, newPlan: "premiu
 
                     // Record Commission
                     const commissionId = `com_${Date.now()}`;
-                    const commissionRef = adminDb.collection("commissions").doc(commissionId);
+                    const commissionRef = db.collection("commissions").doc(commissionId);
                     transaction.set(commissionRef, {
                         id: commissionId,
                         partnerUID,
@@ -77,6 +74,3 @@ export async function upgradeSubscriptionAction(userId: string, newPlan: "premiu
         return { success: false, error: error.message };
     }
 }
-
-// Helper import for increment
-import * as admin from "firebase-admin";

@@ -14,6 +14,7 @@ interface AuthContextType {
   isOwner: boolean;
   isInternal: boolean;
   isAdminOrOwner: boolean;
+  mfaEnabled: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   isOwner: false,
   isInternal: false,
   isAdminOrOwner: false,
+  mfaEnabled: false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -101,6 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isOwner = profile?.role === "owner";
   const isInternal = profile?.accountType === "internal" || isOwner;
   const isAdminOrOwner = isAdmin || isOwner;
+  const mfaEnabled = (user as any)?.multiFactor?.enrolledFactors?.length > 0 || profile?.mfaEnabled;
 
   return (
     <AuthContext.Provider value={{ 
@@ -111,7 +114,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isPro, 
       isOwner, 
       isInternal, 
-      isAdminOrOwner 
+      isAdminOrOwner,
+      mfaEnabled
     }}>
       {children}
     </AuthContext.Provider>

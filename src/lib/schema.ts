@@ -19,10 +19,23 @@ export const UserProfileSchema = z.object({
   updatedAt: z.string(),
   subscriptionPlan: z.enum(["free", "premium", "pro", "owner_unlimited"]).optional(),
   subscriptionStatus: z.string().optional(),
+  stripeCustomerId: z.string().optional(),
+  stripeSubscriptionId: z.string().optional(),
+  stripePriceId: z.string().optional(),
+  currentPeriodEnd: z.string().optional(),
+  cancelAtEnd: z.boolean().optional(),
+  mfaEnabled: z.boolean().optional(),
+  mfaType: z.enum(["sms", "totp"]).optional(),
   accountType: z.enum(["customer", "internal"]).optional(),
   billingBypass: z.boolean().optional(),
   usageBypass: z.boolean().optional(),
   isPartner: z.boolean().optional(),
+  onboardingStatus: z.enum(["pending", "completed"]).default("pending"),
+  onboardingCurrentStep: z.string().optional(),
+  onboardingStartedAt: z.string().optional(),
+  onboardingCompletedAt: z.string().optional(),
+  firstLetterGeneratedAt: z.string().optional(),
+  firstAiSessionAt: z.string().optional(),
 });
 
 export const DisputeSchema = z.object({

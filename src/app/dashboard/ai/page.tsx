@@ -14,22 +14,40 @@ import {
   ChevronRight,
   Plus
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import { AIBubble } from "@/components/ai/AIBubble";
+import { AIProgressTracker } from "@/components/ai/AIProgressTracker";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AIDashboardPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const mode = searchParams.get("mode");
+  const isIntakeMode = mode === "intake";
+
   const [conversationId] = useState(`conv_${Date.now()}`);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const [input, setInput] = useState("");
+
+  const intakeSteps = [
+    { id: "bureau", label: "Bureau" },
+    { id: "details", label: "Details" },
+    { id: "reason", label: "Reason" },
+    { id: "supporting", label: "Supporting" },
+    { id: "review", label: "Review" },
+    { id: "letter", label: "Draft" }
+  ];
+
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [completionPercentage, setCompletionPercentage] = useState(0);
+
   const { messages, sendMessage, status } = useChat({
     api: '/api/ai/chat',
     body: {
       conversationId,
       userId: user?.uid,
-      isIntakeMode: false
+      isIntakeMode: isIntakeMode
     }
   } as any);
 
@@ -130,6 +148,13 @@ export default function AIDashboardPage() {
                ref={scrollRef}
                className="flex-1 overflow-y-auto p-10 space-y-8 bg-white/50 scroll-smooth"
             >
+               {isIntakeMode && (
+                  <AIProgressTracker 
+                    steps={intakeSteps} 
+                    currentStepIndex={currentStepIndex} 
+                    completionPercentage={completionPercentage} 
+                  />
+               )}
                {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8">
                      <div className="w-24 h-24 bg-slate-50 border border-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-200 rotate-3 shadow-inner">

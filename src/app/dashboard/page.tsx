@@ -14,6 +14,7 @@ import {
   Settings
 } from "lucide-react";
 import Link from "next/link";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 
 export default function DashboardPage() {
   const { profile } = useAuth();
@@ -49,6 +50,7 @@ function PersonalDashboard({ profile }: { profile: any }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
+          <OnboardingChecklist />
           <SectionHeader title="Recent Activity" link="/dashboard/disputes" />
           <div className="premium-card overflow-hidden">
             <div className="divide-y divide-slate-100">

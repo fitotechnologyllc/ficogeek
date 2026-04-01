@@ -41,8 +41,9 @@ export const getEntitlements = (
   }
 
   // 3. Determine Effective Plan (Promo > Current Subscription)
-  let effectivePlan = profile.subscriptionPlan || "free";
+  let effectivePlan: "free" | "premium" | "pro" | "owner_unlimited" = (profile.subscriptionPlan as any) || "free";
   
+  // Promotion bypass
   if (activeRedemption && activeRedemption.status === "active") {
     // Promo overrides if it's a higher tier
     if (activeRedemption.grantedPlan === "pro") {
@@ -52,7 +53,16 @@ export const getEntitlements = (
     }
   }
 
-  // 4. Map Plan to Capabilities
+  // 4. Subscription Guard: Ensure Stripe status is active/trailing
+  const validStatuses = ["active", "trialing"];
+  if (profile.stripeSubscriptionId && !validStatuses.includes(profile.subscriptionStatus || "")) {
+    // If stripe subscription exists but is NOT active/trialing, and there's no promo, degrade to free
+    if (!activeRedemption || activeRedemption.status !== "active") {
+       effectivePlan = "free";
+    }
+  }
+
+  // 5. Map Plan to Capabilities
   switch (effectivePlan) {
     case "pro":
       return {

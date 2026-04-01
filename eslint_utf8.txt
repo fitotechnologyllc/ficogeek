@@ -1,0 +1,45 @@
+﻿
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\admin\ai\page.tsx
+  45:6  warning  React Hook useEffect has a missing dependency: 'fetchKnowledge'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\admin\audit\page.tsx
+  51:6  warning  React Hook useEffect has a missing dependency: 'fetchLogs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\admin\templates\page.tsx
+  48:6  warning  React Hook useEffect has a missing dependency: 'fetchTemplates'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\clients\%5Bid%5D\page.tsx
+  89:6  warning  React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\clients\page.tsx
+  53:6  warning  React Hook useEffect has a missing dependency: 'fetchClients'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\disputes\%5Bid%5D\page.tsx
+  80:6  warning  React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\disputes\page.tsx
+  50:6  warning  React Hook useEffect has a missing dependency: 'fetchDisputes'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\letters\page.tsx
+  53:6  warning  React Hook useEffect has a missing dependency: 'fetchLetters'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\partner\page.tsx
+  88:6  warning  React Hook useEffect has a missing dependency: 'fetchPartnerData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\dashboard\vault\page.tsx
+  79:6  warning  React Hook useEffect has a missing dependency: 'fetchDocuments'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\login\page.tsx
+  172:14  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\app\signup\page.tsx
+  194:14  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\components\LetterPreview.tsx
+  57:21  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\hirma\Desktop\FICO Geek\FICO_Geek\src\components\ai\LetterEditorModal.tsx
+  47:6  warning  React Hook useEffect has a missing dependency: 'fetchLetters'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Γ£û 14 problems (1 error, 13 warnings)
+

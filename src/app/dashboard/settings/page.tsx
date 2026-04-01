@@ -16,6 +16,7 @@ import {
   Zap,
   Globe
 } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, setDoc, getDoc } from "firebase/firestore";
@@ -118,15 +119,15 @@ export default function SettingsPage() {
               </div>
            </div>
 
-           <div className="space-y-4">
+            <div className="space-y-4">
               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Navigation</h4>
-              <button className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-primary-blue/30 group transition-all">
+              <Link href="/dashboard/settings/security" className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-primary-blue/30 group transition-all">
                  <div className="flex items-center gap-3">
                     <Lock className="w-5 h-5 text-slate-400 group-hover:text-primary-blue" />
                     <span className="text-sm font-bold text-primary-navy">Security</span>
                  </div>
                  <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-primary-blue" />
-              </button>
+              </Link>
               <button className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-primary-blue/30 group transition-all">
                  <div className="flex items-center gap-3">
                     <Bell className="w-5 h-5 text-slate-400 group-hover:text-primary-blue" />
