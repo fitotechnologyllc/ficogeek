@@ -7,9 +7,9 @@ interface LetterPreviewProps {
   content: string;
   recipient: string;
   address: string;
-  date: string;
-  subject: string;
-  userName: string;
+  date?: string;
+  subject?: string;
+  userName?: string;
   userAddress?: string;
   logo?: boolean;
 }

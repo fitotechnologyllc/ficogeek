@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShieldCheck, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { LogoIcon } from "@/components/ui/LogoIcon";
+import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { ensureUserProfile } from "@/lib/auth-utils";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,6 +31,63 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    console.log("[GoogleAuth] Initializing sign-in flow...");
+    setLoading(true);
+    setError("");
+    const provider = new GoogleAuthProvider();
+    
+    // Customize prompt to ensure user sees the account selector
+    provider.setCustomParameters({ prompt: 'select_account' });
+    
+    try {
+      console.log("[GoogleAuth] Executing signInWithPopup...");
+      const result = await signInWithPopup(auth, provider);
+      
+      console.log("[GoogleAuth] Auth success. UID:", result.user.uid);
+      
+      // Bootstrap Profile
+      console.log("[GoogleAuth] Starting profile bootstrap...");
+      try {
+        await ensureUserProfile(result.user);
+        console.log("[GoogleAuth] Profile bootstrap successful.");
+      } catch (bootstrapErr: any) {
+        console.error("[GoogleAuth] Profile bootstrap failed:", bootstrapErr);
+        // We don't necessarily want to block the login if bootstrap fails but Auth succeeded
+        // however, the dashboard might crash if the profile is missing.
+        // We'll let it proceed and hope the AuthContext listener picks it up or retries.
+      }
+      
+      console.log("[GoogleAuth] Redirecting to dashboard...");
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error(`[GoogleAuth] Sign-in failure: ${err.code} - ${err.message}`);
+      
+      // Specific user-friendly mapping
+      switch (err.code) {
+        case "auth/popup-blocked":
+          setError("The Login popup was blocked by your browser. Please enable popups for this site.");
+          break;
+        case "auth/cancelled-by-user":
+          setError("Login was cancelled. Please try again.");
+          break;
+        case "auth/unauthorized-domain":
+          setError("This domain is not authorized for Google Sign-In. Please contact support.");
+          break;
+        case "auth/internal-error":
+          setError("A temporary internal error occurred. Please try again in a moment.");
+          break;
+        case "auth/network-request-failed":
+          setError("Network connection issue. Please check your internet.");
+          break;
+        default:
+          setError(err.message || "An unexpected error occurred during Google Sign-In.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base-light flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-0 right-0 -mr-40 -mt-20 w-[600px] h-[600px] bg-primary-blue/5 rounded-full blur-[100px]" />
@@ -36,12 +95,12 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10 space-y-8">
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="bg-primary-navy p-2 rounded-xl shadow-xl">
-              <ShieldCheck className="w-8 h-8 text-secondary-teal" />
+          <div className="flex flex-col items-center justify-center gap-6 mb-12">
+            <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-100 ring-4 ring-primary-blue/5">
+              <LogoIcon size={48} className="w-12 h-12" />
             </div>
-            <span className="font-outfit text-2xl font-bold tracking-tight text-primary-navy uppercase">FICO Geek</span>
-          </Link>
+            <span className="font-outfit text-3xl font-bold tracking-tight text-primary-navy uppercase">FICO Geek</span>
+          </div>
           <h1 className="text-3xl font-bold font-outfit text-primary-navy">Welcome back</h1>
           <p className="text-slate-500 font-medium">Access your secure document ledger.</p>
         </div>
@@ -104,7 +163,12 @@ export default function LoginPage() {
             <span className="relative px-4 bg-white text-xs font-bold uppercase tracking-widest text-slate-400">Or continue with</span>
           </div>
 
-          <button className="w-full py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-primary-navy hover:bg-slate-50 transition-all flex items-center justify-center gap-3">
+          <button 
+            type="button"
+            disabled={loading}
+            onClick={handleGoogleLogin}
+            className="w-full py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-primary-navy hover:bg-slate-50 transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          >
              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
              Google Login
           </button>

@@ -109,17 +109,17 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!profile) return;
     
     try {
-      const result = await upgradeSubscriptionAction(profile.uid, newPlan as "premium" | "pro");
+      const result = await upgradeSubscriptionAction(profile.id, newPlan as "premium" | "pro");
       if (!result.success) throw new Error(result.error || "Server-side upgrade failed");
 
       await logAuditAction(
-        profile.uid,
+        profile.id,
         profile.name,
         profile.role,
         "SENSITIVE_RECORD_UPDATE",
         `Subscription plan upgraded to ${newPlan}`,
         "SUBSCRIPTION",
-        profile.uid
+        profile.id
       );
     } catch (e) {
       console.error("Failed to upgrade plan securely", e);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, User, getRedirectResult } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
@@ -33,17 +33,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Initial check for Redirect Result (if any)
+    getRedirectResult(auth).then((result) => {
+      if (result) {
+        console.log("[AuthContext] Redirect login result captured:", result.user.uid);
+      }
+    }).catch(err => {
+      console.error("[AuthContext] Redirect result error:", err);
+    });
+
+    // 2. Listen for Auth State Changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("[AuthContext] Auth state changed:", user ? `USER: ${user.uid}` : "NO_USER");
       setUser(user);
+      
       if (user) {
-        const docRef = doc(db, "profiles", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setProfile(docSnap.data());
+        try {
+          const docRef = doc(db, "profiles", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+             const data = docSnap.data();
+             console.log("[AuthContext] Profile load success:", data.role);
+             setProfile(data);
+          } else {
+             console.warn("[AuthContext] No profile found for authenticated user.");
+             setProfile(null);
+          }
+        } catch (err) {
+          console.error("[AuthContext] Profile fetch failed:", err);
+          setProfile(null);
         }
       } else {
         setProfile(null);
       }
+      
       setLoading(false);
     });
 

@@ -28,7 +28,7 @@ export function AIBubble({ role, content }: AIBubbleProps) {
       <div className="space-y-4 flex-1">
         <div className="flex items-center gap-2">
            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-             {isAssistant ? "FICO Geek AI" : "You"}
+             {isAssistant ? "Geek" : "You"}
            </span>
            {isAssistant && <Sparkles className="w-3 h-3 text-secondary-teal animate-pulse" />}
         </div>

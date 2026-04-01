@@ -21,12 +21,17 @@ import {
   Layout,
   Activity,
   Award,
-  Handshake
+  Handshake,
+  Sparkles
 } from "lucide-react";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { LogoIcon } from "@/components/ui/LogoIcon";
+import { 
+  usePathname, 
+  useRouter 
+} from "next/navigation";
 
 export default function DashboardLayout({
   children,
@@ -47,6 +52,7 @@ export default function DashboardLayout({
       { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
       { name: "Dispute Center", icon: PlusCircle, href: "/dashboard/disputes" },
       { name: "Letter Center", icon: FileText, href: "/dashboard/letters" },
+      { name: "Geek AI", icon: Sparkles, href: "/dashboard/ai" },
       { name: "Document Vault", icon: FolderLock, href: "/dashboard/vault" },
       { name: "Settings", icon: Settings, href: "/dashboard/settings" },
       { name: "Billing", icon: CreditCard, href: "/dashboard/settings/billing" },
@@ -57,6 +63,7 @@ export default function DashboardLayout({
       { name: "Disputes", icon: FileText, href: "/dashboard/disputes" },
       { name: "Documents", icon: FolderLock, href: "/dashboard/vault" },
       { name: "Letters", icon: FileText, href: "/dashboard/letters" },
+      { name: "Geek AI", icon: Sparkles, href: "/dashboard/ai" },
       { name: "Billing", icon: CreditCard, href: "/dashboard/settings/billing" },
       { name: "Partner Program", icon: Handshake, href: "/dashboard/partner" },
       { name: "Settings", icon: Settings, href: "/dashboard/settings" },
@@ -66,6 +73,7 @@ export default function DashboardLayout({
       { name: "Audit Logs", icon: History, href: "/dashboard/admin/audit" },
       { name: "Partners", icon: Handshake, href: "/dashboard/admin/partners" },
       { name: "Templates", icon: Layout, href: "/dashboard/admin/templates" },
+      { name: "AI Logic Center", icon: Sparkles, href: "/dashboard/admin/ai" },
       { name: "Users", icon: Users, href: "/dashboard/admin/users" },
       { name: "Settings", icon: Settings, href: "/dashboard/settings" },
     ],
@@ -95,11 +103,11 @@ export default function DashboardLayout({
           >
             <div className="flex flex-col h-full">
               <div className={`p-6 flex items-center ${isSidebarOpen ? "gap-3" : "justify-center"}`}>
-                <div className="bg-white/10 p-2 rounded-xl">
-                  <ShieldCheck className="w-6 h-6 text-secondary-teal" />
+                <div className="bg-white p-1.5 rounded-xl shadow-lg ring-1 ring-white/20">
+                  <LogoIcon size={32} className="w-8 h-8" />
                 </div>
                 {isSidebarOpen && (
-                  <span className="font-outfit font-bold text-white tracking-wider">FICO GEEK</span>
+                  <span className="font-outfit font-bold text-white tracking-wider text-xl">FICO GEEK</span>
                 )}
               </div>
 
@@ -122,7 +130,7 @@ export default function DashboardLayout({
                 {isSidebarOpen && profile && (
                   <div className="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/10">
                     <div className="w-10 h-10 rounded-lg bg-primary-blue/20 flex items-center justify-center text-primary-blue font-bold">
-                      {profile.name[0]}
+                      {profile.name?.[0] || "U"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-bold text-sm truncate">{profile.name}</p>
@@ -156,7 +164,7 @@ export default function DashboardLayout({
               <div className="flex items-center gap-4">
                 <div className="hidden sm:flex flex-col items-end mr-4">
                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Workspace</p>
-                   <p className="text-sm font-bold text-primary-navy">{profile?.role} environment</p>
+                   <p className="text-sm font-bold text-primary-navy">{profile?.role || "Global"} environment</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200" />
               </div>

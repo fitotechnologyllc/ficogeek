@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoIcon } from "@/components/ui/LogoIcon";
 import { ArrowRight, BookOpen, FileText, LayoutDashboard, ShieldCheck, UserCheck } from "lucide-react";
 
 export default function Home() {
@@ -7,15 +8,15 @@ export default function Home() {
       {/* Navigation */}
       <nav className="sticky top-0 z-50 w-full bg-white/70 border-b border-slate-100 backdrop-blur-xl">
         <div className="container mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary-navy p-1.5 rounded-lg shadow-lg">
-              <ShieldCheck className="w-6 h-6 text-secondary-teal" />
+          <div className="flex items-center gap-3">
+            <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+              <LogoIcon size={24} className="w-6 h-6" />
             </div>
             <span className="font-outfit text-xl font-bold tracking-tight text-primary-navy">FICO <span className="text-primary-blue">GEEK</span></span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             <Link href="#features" className="hover:text-primary-blue transition-colors">Features</Link>
-            <Link href="#how-it-works" className="hover:text-primary-blue transition-colors">How it works</Link>
+            <Link href="#how-it-works" className="hover:text-how-it-works transition-colors">How it works</Link>
             <Link href="#pricing" className="hover:text-primary-blue transition-colors">Pricing</Link>
             <Link href="/login" className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all font-semibold">Login</Link>
             <Link href="/signup" className="px-5 py-2.5 rounded-xl bg-primary-navy text-white hover:bg-primary-navy-muted transition-all shadow-lg shadow-slate-900/10 font-semibold">Sign Up</Link>
@@ -156,11 +157,11 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-start gap-12">
             <div className="space-y-6 max-w-sm">
-              <div className="flex items-center gap-2">
-                <div className="bg-primary-navy p-1.5 rounded-lg">
-                  <ShieldCheck className="w-6 h-6 text-secondary-teal" />
+              <div className="flex items-center gap-3">
+                <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                  <LogoIcon size={32} className="w-8 h-8" />
                 </div>
-                <span className="font-outfit text-xl font-bold tracking-tight text-primary-navy uppercase">FICO Geek</span>
+                <span className="font-outfit text-2xl font-bold tracking-tight text-primary-navy uppercase">FICO Geek</span>
               </div>
               <p className="text-slate-500 text-sm leading-relaxed">
                 FICO Geek is a secure self-help credit dispute and document workspace. We provide educational resources and letter generation tools. We do not provide legal representation or guarantee credit score removals.

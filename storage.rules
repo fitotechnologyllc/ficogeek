@@ -10,8 +10,10 @@ service firebase.storage {
     }
 
     function isAdmin() {
-      return isSignedIn() && 
-        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn() && (
+        request.auth.uid == 'ZbwjSWuunZYQAMtLWLgjB4ezQqh2' ||
+        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.role == 'admin'
+      );
     }
 
     // --- NAMESPACED RULES ---

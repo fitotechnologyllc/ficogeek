@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { useAuth } from "@/context/AuthContext";
+import { RedeemPromoForm } from "@/components/promo/RedeemPromoForm";
+import { motion } from "framer-motion";
 
 const PLANS = [
   {
@@ -80,12 +82,15 @@ export default function BillingPage() {
     try {
       await upgradePlan(planId as any);
       alert("Plan upgraded successfully!");
-    } catch (e) {
-      alert("Upgrade failed. Please try again.");
+    } catch (e: any) {
+      alert(e.message || "Upgrade failed. Please try again.");
     } finally {
       setUpgrading(null);
     }
   };
+
+  const isOwnerAccess = profile?.role === "owner";
+  const isActivePromo = profile?.subscriptionStatus === "active_promo";
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto">
@@ -209,6 +214,61 @@ export default function BillingPage() {
             <div className="space-y-1">
                <h4 className="font-bold text-primary-navy">White Labeling</h4>
                <p className="text-sm text-slate-500 font-medium leading-relaxed">Pro subscribers can now add their own law firm or credit agency logo to all generated dispute correspondence.</p>
+            </div>
+         </div>
+      </div>
+
+      {/* Promo & Status Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+         {/* Promo Redemption */}
+         <div className="premium-card p-10 bg-slate-900 text-white relative overflow-hidden group shadow-2xl">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-secondary-teal/10 blur-[60px] -mr-20 -mt-20 group-hover:bg-secondary-teal/20 transition-all duration-700" />
+            <div className="relative z-10 space-y-8">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-secondary-teal">
+                     <Zap className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                     <h3 className="text-xl font-bold font-outfit">Sovereign Accelerator</h3>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Internal Access & Promotional Tokens</p>
+                  </div>
+               </div>
+               <p className="text-sm text-slate-400 font-medium leading-relaxed">Elevate your membership instantly using a verified partner code or internal bypass token. Tokens grant fixed duration or unlimited features.</p>
+               <RedeemPromoForm />
+            </div>
+         </div>
+
+         {/* Active Entitlements */}
+         <div className="premium-card p-10 space-y-8 bg-white border-slate-200 shadow-xl self-start">
+            <div className="flex items-center gap-4">
+               <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-primary-navy shadow-inner">
+                  <ShieldCheck className="w-6 h-6" />
+               </div>
+               <div className="space-y-1">
+                  <h3 className="text-xl font-bold font-outfit text-primary-navy">Active Entitlements</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Verified Sovereign Ledger Access</p>
+               </div>
+            </div>
+            
+            <div className="space-y-5">
+               <div className="flex justify-between items-center px-2 py-1 border-b border-slate-50">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Current Tier</span>
+                  <span className={`text-sm font-bold italic uppercase tracking-wider ${isOwnerAccess ? "text-primary-blue" : "text-primary-navy"}`}>
+                     {isOwnerAccess ? "Owner (Full Bypass)" : isActivePromo ? `Promo (${plan})` : plan}
+                  </span>
+               </div>
+               <div className="flex justify-between items-center px-2 py-1 border-b border-slate-50">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Billing Cycle</span>
+                  <span className="text-sm font-bold text-slate-600">
+                     {isOwnerAccess ? "Internal Managed" : isActivePromo ? "Promotional Grant" : "Standard Renewal"}
+                  </span>
+               </div>
+               <div className="flex justify-between items-center px-2 py-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Account Status</span>
+                  <span className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 shadow-sm transition-all hover:scale-105">
+                     <CheckCircle2 className="w-3.5 h-3.5" /> High Integrity
+                  </span>
+               </div>
             </div>
          </div>
       </div>

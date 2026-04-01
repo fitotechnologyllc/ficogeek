@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShieldCheck, Mail, Lock, Loader2, User, ArrowRight, CheckCircle2 } from "lucide-react";
-import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, collection, addDoc, updateDoc, increment } from "firebase/firestore";
+import { LogoIcon } from "@/components/ui/LogoIcon";
+import { Mail, Lock, Loader2, User, ArrowRight, CheckCircle2 } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { UserProfileSchema } from "@/lib/schema";
-import { logAuditAction } from "@/lib/audit";
+import { ensureUserProfile } from "@/lib/auth-utils";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -26,70 +25,45 @@ export default function SignupPage() {
     
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Create profile in Firestore
-      const profileData = {
-        id: user.uid,
-        name,
-        email,
-        role,
-        status: "Active" as const,
-        isPartner: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Validate with Zod before write
-      UserProfileSchema.parse(profileData);
-
-      await setDoc(doc(db, "profiles", user.uid), profileData);
-
-      // Audit Log for Sign up
-      await logAuditAction(
-        user.uid,
-        name,
-        role,
-        "SIGN_UP",
-        `New account registered as ${role}`,
-        "USER",
-        user.uid
-      );
-
-      // Handle Referral Attribution
-      const refUID = sessionStorage.getItem("fico_geek_ref");
-      const couponUsed = sessionStorage.getItem("fico_geek_coupon");
-
-      if (refUID) {
-         try {
-            const referralId = `${refUID}_${user.uid}`;
-            await setDoc(doc(db, "referrals", referralId), {
-              partnerUID: refUID,
-              referredUserUID: user.uid,
-              status: "Signup",
-              revenueGenerated: 0,
-              commissionEarned: 0,
-              createdAt: new Date().toISOString()
-            });
-
-            // Increment signup counter for partner
-            const partnerRef = doc(db, "partners", refUID);
-            await updateDoc(partnerRef, {
-               totalSignups: increment(1)
-            });
-
-            // Clear attribution pulses
-            sessionStorage.removeItem("fico_geek_ref");
-            sessionStorage.removeItem("fico_geek_coupon");
-         } catch (e) {
-            console.error("Referral attribution failed", e);
-         }
-      }
-      
+      await ensureUserProfile(userCredential.user, role, name);
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to create account");
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    console.log("Starting Google Registration flow...");
+    setLoading(true);
+    setError("");
+    const provider = new GoogleAuthProvider();
+    
+    try {
+      console.log("Triggering signInWithPopup...");
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google Signup successful, ensuring profile exists with role:", role, result.user.uid);
+      await ensureUserProfile(result.user, role);
+      console.log("Profile check complete, redirecting to dashboard...");
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error("Google signup error:", err);
+      
+      // Check for popup blocked or closed by user
+      if (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-by-user") {
+        console.log("Popup blocked or closed. Falling back to redirect...");
+        try {
+          await signInWithRedirect(auth, provider);
+          // Note: redirect won't return; page will reload
+          return;
+        } catch (redirectErr: any) {
+          console.error("Redirect registration error:", redirectErr);
+          setError("Multiple registration methods failed. Please check your browser settings.");
+        }
+      } else {
+        setError(err.message || "Google sign in failed");
+      }
       setLoading(false);
     }
   };
@@ -101,12 +75,12 @@ export default function SignupPage() {
 
       <div className="w-full max-w-lg relative z-10 space-y-8">
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="bg-primary-navy p-2 rounded-xl shadow-xl">
-              <ShieldCheck className="w-8 h-8 text-secondary-teal" />
+          <div className="flex flex-col items-center justify-center gap-6 mb-12">
+            <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-100 ring-4 ring-primary-blue/5">
+              <LogoIcon size={48} className="w-12 h-12" />
             </div>
-            <span className="font-outfit text-2xl font-bold tracking-tight text-primary-navy uppercase">FICO Geek</span>
-          </Link>
+            <span className="font-outfit text-3xl font-bold tracking-tight text-primary-navy uppercase">FICO Geek</span>
+          </div>
           <h1 className="text-3xl font-bold font-outfit text-primary-navy">Register Account</h1>
           <p className="text-slate-500 font-medium tracking-tight">Choose your workspace type to continue.</p>
         </div>
@@ -194,7 +168,6 @@ export default function SignupPage() {
                 />
               </div>
             </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -204,6 +177,23 @@ export default function SignupPage() {
               {!loading && <ArrowRight className="w-5 h-5" />}
             </button>
           </form>
+
+          <div className="relative py-2 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-100"></div>
+            </div>
+            <span className="relative px-4 bg-white text-xs font-bold uppercase tracking-widest text-slate-400">Or continue with</span>
+          </div>
+
+          <button 
+            type="button"
+            disabled={loading}
+            onClick={handleGoogleLogin}
+            className="w-full py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-primary-navy hover:bg-slate-50 transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          >
+             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+             Google Registration
+          </button>
 
           <p className="text-xs text-slate-400 text-center leading-relaxed max-w-xs mx-auto">
             By registering, you agree to our <Link href="#" className="underline">Terms of Service</Link> and recognize this as a <span className="text-slate-500 font-bold uppercase tracking-tight">self-help tool</span>.

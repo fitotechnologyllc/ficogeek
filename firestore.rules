@@ -14,7 +14,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && getProfile().role == 'admin';
+      return isSignedIn() && (getProfile().role == 'admin' || request.auth.uid == 'ZbwjSWuunZYQAMtLWLgjB4ezQqh2');
     }
 
     function isOwnerRole() {

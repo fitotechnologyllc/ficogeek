@@ -53,8 +53,8 @@ export default function ClientsPage() {
   }, [user]);
 
   const filteredClients = clients.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (c.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+    (c.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -162,7 +162,7 @@ export default function ClientsPage() {
                 <div className="flex items-center gap-8">
                   {/* Avatar / Identity */}
                   <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-primary-navy group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 border-4 border-white shadow-xl shadow-slate-200/50">
-                    <span className="text-2xl font-bold font-outfit uppercase">{client.name.charAt(0)}</span>
+                    <span className="text-2xl font-bold font-outfit uppercase">{client.name?.[0] || "?"}</span>
                   </div>
                   
                   <div className="space-y-2">

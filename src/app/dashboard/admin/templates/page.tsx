@@ -65,7 +65,7 @@ export default function AdminTemplatesPage() {
         await addDoc(collection(db, "templates"), {
           ...editingTemplate,
           active: true,
-          placeholders: ["{{NAME}}", "{{ADDRESS}}", "{{BUREAU_NAME}}", "{{ACCOUNT_NUMBER}}"],
+          placeholders: ["{{USER_NAME}}", "{{USER_ADDRESS}}", "{{CITY_STATE_ZIP}}", "{{DATE}}", "{{BUREAU_NAME}}", "{{BUREAU_ADDRESS}}", "{{ACCOUNT_NAME}}", "{{ACCOUNT_NUMBER}}", "{{DISPUTE_REASON}}", "{{DISPUTE_BODY}}", "{{SIGNATURE_NAME}}"],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
@@ -184,12 +184,17 @@ export default function AdminTemplatesPage() {
                </h3>
                <div className="space-y-4">
                   <pre className="p-4 bg-slate-50 rounded-xl text-[10px] font-bold text-primary-navy border border-slate-100 overflow-x-auto">
-                     {`{{NAME}}
-{{ADDRESS}}
+                     {`{{USER_NAME}}
+{{USER_ADDRESS}}
+{{CITY_STATE_ZIP}}
 {{BUREAU_NAME}}
+{{BUREAU_ADDRESS}}
+{{ACCOUNT_NAME}}
 {{ACCOUNT_NUMBER}}
 {{DISPUTE_REASON}}
-{{TODAYS_DATE}}`}
+{{DISPUTE_BODY}}
+{{SIGNATURE_NAME}}
+{{DATE}}`}
                   </pre>
                   <p className="text-[11px] font-medium text-slate-400 leading-relaxed italic">Placeholders are case-sensitive and must be wrapped in double curly braces.</p>
                </div>

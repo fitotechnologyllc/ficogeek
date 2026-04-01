@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "fico-geek-6356"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
