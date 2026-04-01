@@ -28,9 +28,11 @@ interface ChatWindowProps {
 export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindowProps) {
   const { user } = useAuth();
   const [conversationId, setConversationId] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     // Generate stable ID on client only to avoid hydration mismatch
     setConversationId(`conv_${Date.now()}`);
   }, []);
@@ -38,34 +40,43 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
   const [activeLetterIds, setActiveLetterIds] = useState<string[]>([]);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  // Manual input state for AI SDK v6
-  const [input, setInput] = useState("");
-  const { messages, append, status } = useChat({
+  // AI SDK v3 usage - bypass strict typing for now to get stability
+  const { 
+    messages, 
+    append, 
+    status, 
+    handleSubmit, 
+    input, 
+    setInput,
+    isLoading: isChatLoading
+  } = useChat({
     api: '/api/ai/chat',
     body: {
       conversationId,
       userId: user?.uid,
       isIntakeMode
-    },
-    onFinish: (message: any) => {
-       // Check for tool results in the finished message if using older SDK
     }
   } as any) as any;
 
-  const isLoading = status === 'submitted' || status === 'streaming';
+  const isLoading = isChatLoading || status === 'submitted' || status === 'streaming';
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     
-    const userMessage = input;
-    setInput("");
-    
     try {
-      await append({
-        role: "user",
-        content: userMessage
-      });
+      // Use handleSubmit or append. handleSubmit is preferred for form events
+      if (typeof append === 'function') {
+        await append({
+          role: "user",
+          content: input
+        });
+        setInput("");
+      } else {
+        console.error("Critical: 'append' function is missing from useChat. Falling back to handleSubmit.");
+        // If append is missing, handleSubmit might work if input was linked
+        handleSubmit(e);
+      }
     } catch (err) {
       console.error("Chat error:", err);
     }
@@ -101,7 +112,7 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
     }
   }, [messages]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   return (
     <>
@@ -211,7 +222,7 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
           />
           <button 
             type="submit"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || !input?.trim()}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-primary-navy text-white rounded-[1.5rem] shadow-xl shadow-navy-900/10 hover:bg-primary-navy-muted transition-all active:scale-95 disabled:bg-slate-200 disabled:shadow-none"
           >
             <Send className="w-5 h-5" />

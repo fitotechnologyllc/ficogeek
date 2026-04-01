@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ReferralTracker } from "@/components/ReferralTracker";
 import { AuthProvider } from "@/context/AuthContext";
 import { ChatAssistant } from "@/components/ai/ChatAssistant";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -27,11 +28,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable} font-inter antialiased bg-base-light text-primary-navy`}>
         <AuthProvider>
-          <Suspense fallback={null}>
-            <ReferralTracker />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={null}>
+              <ReferralTracker />
+            </Suspense>
+          </ErrorBoundary>
           {children}
-          <ChatAssistant />
+          <ErrorBoundary>
+            <ChatAssistant />
+          </ErrorBoundary>
         </AuthProvider>
       </body>
     </html>

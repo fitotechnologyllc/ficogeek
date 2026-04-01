@@ -48,21 +48,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(user);
       
       if (user) {
-        try {
-          const docRef = doc(db, "profiles", user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-             const data = docSnap.data();
-             console.log("[AuthContext] Profile load success:", data.role);
-             setProfile(data);
-          } else {
-             console.warn("[AuthContext] No profile found for authenticated user.");
-             setProfile(null);
+        let retryCount = 0;
+        const maxRetries = 2;
+        
+        const fetchProfile = async () => {
+          try {
+            const docRef = doc(db, "profiles", user.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              console.log("[AuthContext] Profile load success:", data.role);
+              setProfile(data);
+              return true;
+            }
+            return false;
+          } catch (err: any) {
+            console.error(`[AuthContext] Profile fetch attempt ${retryCount + 1} failed:`, err.code || err.message);
+            return false;
           }
-        } catch (err) {
-          console.error("[AuthContext] Profile fetch failed:", err);
-          setProfile(null);
+        };
+
+        const success = await fetchProfile();
+        
+        // If profile not found, it might be a new user still being bootstrapped
+        if (!success && user.providerData.some(p => p.providerId === 'google.com')) {
+           console.log("[AuthContext] Profile missing/failed for Google user. Retrying in 2s...");
+           setTimeout(async () => {
+             retryCount++;
+             const finalTry = await fetchProfile();
+             if (!finalTry) {
+               console.warn("[AuthContext] Profile still missing after retry.");
+               setProfile(null);
+             }
+             setLoading(false);
+           }, 2000);
+           return; // Skip the final setLoading(false) for now
         }
+        
+        if (!success) setProfile(null);
       } else {
         setProfile(null);
       }
