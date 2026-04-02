@@ -27,6 +27,7 @@ import { formatDisplayDate } from "@/lib/utils";
 export default function DisputesPage() {
   const [disputes, setDisputes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const { user, profile } = useAuth();
 
   const fetchDisputes = async () => {
@@ -50,6 +51,12 @@ export default function DisputesPage() {
     fetchDisputes();
   }, [user]);
 
+  const filteredDisputes = disputes.filter(d => 
+    d.creditorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.bureau.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const stats = [
     { label: "Active", value: disputes.filter(d => d.status === "Sent").length, icon: Zap, color: "text-primary-blue", bg: "bg-primary-blue/5" },
     { label: "Drafts", value: disputes.filter(d => d.status === "Draft").length, icon: FileText, color: "text-amber-500", bg: "bg-amber-50/50" },
@@ -69,13 +76,17 @@ export default function DisputesPage() {
           <p className="text-slate-500 font-medium tracking-tight">Active management for your {disputes.length} ongoing credit disputes.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="p-4 bg-white border border-slate-200 text-slate-400 hover:text-primary-navy rounded-2xl transition-all shadow-sm">
+          <button 
+            onClick={() => setSearchTerm("")}
+            className="p-4 bg-white border border-slate-200 text-slate-400 hover:text-primary-navy rounded-2xl transition-all shadow-sm"
+            title="Clear Filters"
+          >
              <Filter className="w-5 h-5" />
           </button>
-          <button className="btn-primary group flex items-center gap-3 py-4 px-8 shadow-2xl">
+          <Link href="/dashboard/disputes/new" className="btn-primary group flex items-center gap-3 py-4 px-8 shadow-2xl">
             <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
             <span>Launch New Dispute</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -100,9 +111,11 @@ export default function DisputesPage() {
           <div className="relative flex-1 max-w-lg group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-blue transition-colors" />
             <input 
-              type="text" 
-              placeholder="Search disputes by reference, bureau or creditor..."
-              className="w-full pl-14 pr-6 py-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-blue/5 transition-all font-bold text-slate-700"
+               type="text" 
+               placeholder="Search disputes by reference, bureau or creditor..."
+               className="w-full pl-14 pr-6 py-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-blue/5 transition-all font-bold text-slate-700"
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
@@ -113,7 +126,7 @@ export default function DisputesPage() {
                <div className="w-12 h-12 border-4 border-primary-blue/10 border-t-primary-blue rounded-full animate-spin" />
                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Syncing Ledger...</p>
             </div>
-          ) : disputes.length === 0 ? (
+          ) : filteredDisputes.length === 0 ? (
             <div className="p-32 text-center space-y-8 bg-slate-50/10">
                <div className="w-32 h-32 bg-white rounded-[3rem] border border-slate-100 flex items-center justify-center mx-auto text-slate-200 shadow-2xl relative">
                   <TrendingUp className="w-12 h-12" />
@@ -127,7 +140,7 @@ export default function DisputesPage() {
                </div>
             </div>
           ) : (
-            disputes.map((d) => {
+            filteredDisputes.map((d) => {
               const statusColors = {
                 Draft: "bg-slate-100 text-slate-500 border-slate-200",
                 Pending: "bg-amber-50 text-amber-600 border-amber-100",
@@ -199,9 +212,9 @@ export default function DisputesPage() {
                   <h4 className="text-xl font-bold font-outfit">Legislative Update</h4>
                   <p className="text-sm font-medium text-slate-300 leading-relaxed max-w-xs">New FCRA compliance rules for medical collections take effect next month. Review your active cases.</p>
                </div>
-               <button className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-blue hover:text-white transition-colors pt-2">
-                  Read Analysis <ArrowRight className="w-4 h-4" />
-               </button>
+                <Link href="/dashboard/education/fcra-compliance" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-blue hover:text-white transition-colors pt-2 w-fit">
+                   Read Analysis <ArrowRight className="w-4 h-4" />
+                </Link>
             </div>
             <div className="hidden lg:block relative z-10 pr-4 opacity-50 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                <History className="w-24 h-24 stroke-[1px]" />

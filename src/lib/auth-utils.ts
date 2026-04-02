@@ -39,6 +39,7 @@ export async function ensureUserProfile(user: User, role: "personal" | "pro" = "
     role: role, // Default to personal for new users
     status: "Active" as const,
     isPartner: false,
+    photoURL: user.photoURL || "",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

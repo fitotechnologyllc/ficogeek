@@ -15,6 +15,8 @@ interface AuthContextType {
   isInternal: boolean;
   isAdminOrOwner: boolean;
   mfaEnabled: boolean;
+  is2faVerified: boolean;
+  set2faVerified: (verified: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -27,6 +29,8 @@ const AuthContext = createContext<AuthContextType>({
   isInternal: false,
   isAdminOrOwner: false,
   mfaEnabled: false,
+  is2faVerified: false,
+  set2faVerified: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -34,20 +38,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [is2faVerified, setIs2faVerified] = useState<boolean>(false);
+
   useEffect(() => {
+    // Sync 2FA verification status from sessionStorage
+    const stored = typeof window !== "undefined" ? sessionStorage.getItem("fico_2fa_verified") : null;
+    if (stored === "true") {
+      setIs2faVerified(true);
+    }
+
     // 1. Initial check for Redirect Result (if any)
-    getRedirectResult(auth).then((result) => {
-      if (result) {
-        console.log("[AuthContext] Redirect login result captured:", result.user.uid);
-      }
-    }).catch(err => {
+    getRedirectResult(auth).catch(err => {
       console.error("[AuthContext] Redirect result error:", err);
     });
 
     // 2. Listen for Auth State Changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("[AuthContext] Auth state changed:", firebaseUser ? `USER: ${firebaseUser.uid}` : "NO_USER");
-      
       if (firebaseUser) {
         try {
           const docRef = doc(db, "profiles", firebaseUser.uid);
@@ -55,15 +61,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (docSnap.exists()) {
             const data = docSnap.data();
-            console.log("[AuthContext] Profile loaded:", data.role);
             setProfile(data);
             setUser(firebaseUser);
           } else {
-            console.warn("[AuthContext] Profile missing for user:", firebaseUser.uid);
-            
             // For Google users, allow a brief delay for backend bootstrapping
             if (firebaseUser.providerData.some(p => p.providerId === 'google.com')) {
-              console.log("[AuthContext] Retrying profile fetch for Google user...");
               const retrySnap = await getDoc(docRef);
               if (retrySnap.exists()) {
                 setProfile(retrySnap.data());
@@ -85,6 +87,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setProfile(null);
         setUser(null);
+        setIs2faVerified(false);
+        if (typeof window !== "undefined") sessionStorage.removeItem("fico_2fa_verified");
         setLoading(false);
       }
     });
@@ -92,13 +96,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  const set2faVerified = (verified: boolean) => {
+    setIs2faVerified(verified);
+    if (typeof window !== "undefined") {
+      if (verified) sessionStorage.setItem("fico_2fa_verified", "true");
+      else sessionStorage.removeItem("fico_2fa_verified");
+    }
+  };
+
   const value = useMemo(() => {
     const isAdmin = profile?.role === "admin";
     const isPro = profile?.role === "pro";
     const isOwner = profile?.role === "owner";
     const isInternal = profile?.accountType === "internal" || isOwner;
     const isAdminOrOwner = isAdmin || isOwner;
-    const mfaEnabled = !!((user as any)?.multiFactor?.enrolledFactors?.length > 0 || profile?.mfaEnabled);
+    const mfaEnabled = !!(profile?.twoFactorEnabled || profile?.mfaEnabled);
 
     return {
       user,
@@ -109,9 +121,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isOwner,
       isInternal,
       isAdminOrOwner,
-      mfaEnabled
+      mfaEnabled,
+      is2faVerified,
+      set2faVerified
     };
-  }, [user, profile, loading]);
+  }, [user, profile, loading, is2faVerified]);
 
   return (
     <AuthContext.Provider value={value}>

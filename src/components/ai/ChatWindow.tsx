@@ -12,9 +12,11 @@ import {
   ChevronDown,
   FileText,
   CheckCircle,
-  ExternalLink
+  ExternalLink 
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 import { AIBubble } from "./AIBubble";
 import { LetterEditorModal } from "./LetterEditorModal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,7 +28,7 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindowProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [conversationId, setConversationId] = useState<string>("");
   const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -60,11 +62,27 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
 
   const isLoading = isChatLoading || status === 'submitted' || status === 'streaming';
 
+  const markFirstSession = async () => {
+    if (!user || profile?.firstAiSessionAt) return;
+    try {
+      await updateDoc(doc(db, "profiles", user.uid), {
+        firstAiSessionAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Failed to mark AI session:", err);
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     
     try {
+      // Mark session on first message
+      if (messages.length === 0) {
+        await markFirstSession();
+      }
+
       // Use handleSubmit or append. handleSubmit is preferred for form events
       if (typeof append === 'function') {
         await append({
@@ -120,7 +138,7 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
       initial={{ opacity: 0, scale: 0.95, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
-      className="fixed bottom-24 right-8 w-[450px] h-[700px] bg-white rounded-[2.5rem] shadow-[0_32px_96px_-16px_rgba(15,23,42,0.25)] border border-slate-100 flex flex-col z-[100] overflow-hidden"
+      className="fixed bottom-0 right-0 sm:bottom-24 sm:right-8 w-full sm:w-[450px] h-[100dvh] sm:h-[700px] bg-white sm:rounded-[2.5rem] shadow-[0_32px_96px_-16px_rgba(15,23,42,0.25)] border-t sm:border border-slate-100 flex flex-col z-[100] overflow-hidden"
     >
       {/* Premium Header */}
       <div className="p-8 bg-slate-900 text-white relative overflow-hidden">
@@ -161,11 +179,20 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
                <p className="text-sm font-medium text-slate-400 uppercase tracking-widest leading-relaxed italic border-l-2 border-slate-100 pl-4 mx-8">&quot;I provide educational guidance and help you draft professional dispute correspondence. How can I assist your workflow today?&quot;</p>
             </div>
             
-            <div className="grid grid-cols-1 gap-3 px-4">
-               <QuickAction label="What is Section 609?" onClick={() => setInput("What is Section 609?")} />
-               <QuickAction label="Where can I get my credit report?" onClick={() => setInput("Where can I get my credit report?")} />
-               <QuickAction label="How do I draft a dispute letter?" onClick={() => setInput("How do I draft a dispute letter?")} />
-            </div>
+             <div className="grid grid-cols-1 gap-3 px-4">
+                <QuickAction label="What is Section 609?" onClick={async () => {
+                  if (messages.length === 0) await markFirstSession();
+                  append({ role: 'user', content: 'What is Section 609?' });
+                }} />
+                <QuickAction label="Where can I get my credit report?" onClick={async () => {
+                  if (messages.length === 0) await markFirstSession();
+                  append({ role: 'user', content: 'Where can I get my credit report?' });
+                }} />
+                <QuickAction label="How do I draft a dispute letter?" onClick={async () => {
+                  if (messages.length === 0) await markFirstSession();
+                  append({ role: 'user', content: 'How do I draft a dispute letter?' });
+                }} />
+             </div>
           </div>
         )}
 
@@ -214,16 +241,23 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
           onSubmit={handleFormSubmit}
           className="relative group"
         >
-          <input 
+          <textarea 
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleFormSubmit(e as any);
+              }
+            }}
             placeholder={isIntakeMode ? "Type your response..." : "Ask a platform question..."}
-            className="w-full pl-6 pr-16 py-5 bg-slate-50 border border-slate-100 rounded-[2rem] outline-none focus:bg-white focus:ring-4 focus:ring-primary-blue/5 transition-all font-bold text-slate-700 shadow-inner group-hover:border-slate-200"
+            rows={1}
+            className="w-full pl-6 pr-16 py-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] outline-none focus:bg-white focus:ring-4 focus:ring-primary-blue/5 transition-all font-bold text-slate-700 shadow-inner group-hover:border-slate-200 resize-none min-h-[56px] max-h-[120px]"
           />
           <button 
             type="submit"
             disabled={isLoading || !input?.trim()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-primary-navy text-white rounded-[1.5rem] shadow-xl shadow-navy-900/10 hover:bg-primary-navy-muted transition-all active:scale-95 disabled:bg-slate-200 disabled:shadow-none"
+            className="absolute right-3 bottom-3 p-4 bg-primary-navy text-white rounded-[1.2rem] shadow-xl shadow-navy-900/10 hover:bg-primary-navy-muted transition-all active:scale-95 disabled:bg-slate-200 disabled:shadow-none"
           >
             <Send className="w-5 h-5" />
           </button>

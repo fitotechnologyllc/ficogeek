@@ -26,6 +26,7 @@ export const UserProfileSchema = z.object({
   cancelAtEnd: z.boolean().optional(),
   mfaEnabled: z.boolean().optional(),
   mfaType: z.enum(["sms", "totp"]).optional(),
+  photoURL: z.string().optional(),
   accountType: z.enum(["customer", "internal"]).optional(),
   billingBypass: z.boolean().optional(),
   usageBypass: z.boolean().optional(),

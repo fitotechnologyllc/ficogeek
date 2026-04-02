@@ -2,116 +2,103 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { 
-  FileText, 
-  Users, 
+  Briefcase, 
   Clock, 
+  FileText, 
   ShieldCheck, 
-  TrendingUp, 
-  CheckCircle2, 
-  PlusCircle,
+  Users, 
+  Zap, 
   ArrowRight,
-  Database,
-  Settings
+  TrendingUp,
+  AlertCircle,
+  PlusCircle,
+  Settings,
+  Database
 } from "lucide-react";
 import Link from "next/link";
-import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { formatDisplayDate } from "@/lib/utils";
 import { ForceAIEntryOverlay } from "@/components/dashboard/ForceAIEntryOverlay";
-import { useState, useEffect } from "react";
-import { UserProfile } from "@/lib/schema";
 
 export default function DashboardPage() {
   const { profile } = useAuth();
-  const [showActivation, setShowActivation] = useState(false);
-
-  useEffect(() => {
-    // Only show activation if onboarding is fully completed but 1st AI session hasn't started
-    const isOnboardingComplete = profile?.onboardingStatus === "completed";
-    
-    if (profile && isOnboardingComplete && !profile.firstAiSessionAt && (profile.role === "personal" || !profile.role)) {
-      const dismissed = localStorage.getItem(`fico_geek_activation_dismissed_${profile.uid}`);
-      if (!dismissed) {
-         setShowActivation(true);
-      }
-    }
-  }, [profile]);
-
-  const handleDismiss = () => {
-    if (profile) {
-      localStorage.setItem(`fico_geek_activation_dismissed_${profile.uid}`, "true");
-    }
-    setShowActivation(false);
-  };
-
-  const role = profile?.role || "personal";
+  const isPro = profile?.role === "pro";
 
   return (
-    <>
-      <DashboardContent role={role} profile={profile} />
-      {showActivation && <ForceAIEntryOverlay onDismiss={handleDismiss} />}
-    </>
+    <div className="space-y-10 max-w-7xl mx-auto">
+      {/* Dynamic Overlay logic based on profile metadata */}
+      {profile && !profile.firstAiSessionAt && (
+        <ForceAIEntryOverlay onDismiss={() => {}} />
+      )}
+
+      {isPro ? <ProDashboard profile={profile} /> : <PersonalDashboard profile={profile} />}
+    </div>
   );
 }
 
-function DashboardContent({ role, profile }: { role: string, profile: UserProfile | null }) {
-  if (role === "personal") return <PersonalDashboard profile={profile} />;
-  if (role === "pro") return <ProDashboard profile={profile} />;
-  return <AdminDashboard profile={profile} />;
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+       <div className="w-1 h-6 bg-primary-blue rounded-full" />
+       <h2 className="text-xl font-bold font-outfit text-primary-navy uppercase tracking-tight">{title}</h2>
+    </div>
+  );
 }
 
-function PersonalDashboard({ profile }: { profile: UserProfile | null }) {
+function PersonalDashboard({ profile }: { profile: any }) {
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold font-outfit text-primary-navy">Hello, {profile?.name}</h1>
-          <p className="text-slate-500 font-medium tracking-tight">Welcome to your secure credit workspace.</p>
+          <h1 className="text-4xl font-extrabold font-outfit text-primary-navy tracking-tight">System Overview</h1>
+          <p className="text-slate-500 font-medium tracking-tight">Active monitoring for {profile?.name}.</p>
         </div>
-        <Link 
-          href="/dashboard/disputes/new" 
-          className="btn-primary flex items-center gap-2 shadow-2xl"
-        >
-          <PlusCircle className="w-5 h-5" /> Start New Dispute
+        <Link href="/dashboard/disputes/new" className="btn-primary flex items-center gap-2 shadow-2xl shadow-primary-blue/20 px-8 py-4">
+          <PlusCircle className="w-5 h-5" /> Launch New Dispute
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Active Disputes" value="4" icon={TrendingUp} color="text-primary-blue" bg="bg-primary-blue/10" />
-        <StatCard title="Letters Generated" value="12" icon={FileText} color="text-secondary-teal" bg="bg-secondary-teal/10" />
-        <StatCard title="Saved Documents" value="8" icon={Database} color="text-purple-600" bg="bg-purple-100" />
-        <StatCard title="Deadlines" value="2" icon={Clock} color="text-amber-600" bg="bg-amber-100" />
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <OnboardingChecklist />
-          <SectionHeader title="Recent Activity" link="/dashboard/disputes" />
-          <div className="premium-card overflow-hidden">
-            <div className="divide-y divide-slate-100">
-               {[1, 2, 3].map((i) => (
-                 <div key={i} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-all group">
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-primary-blue/10 group-hover:text-primary-blue transition-all">
-                          <FileText className="w-5 h-5" />
-                       </div>
-                       <div>
-                          <p className="font-bold text-slate-800">TransUnion Dispute Letter</p>
-                          <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Type: Verification • 3 days ago</p>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-widest rounded-full">Waiting response</span>
-                       <ArrowRight className="w-4 h-4 text-slate-200 group-hover:text-primary-blue transition-all" />
-                    </div>
+        <div className="lg:col-span-2 space-y-8">
+           <SectionHeader title="Active Disputes" />
+           <div className="premium-card p-10 text-center space-y-8 bg-slate-50/30">
+              <div className="w-24 h-24 bg-white rounded-[2rem] border border-slate-100 flex items-center justify-center mx-auto text-slate-200">
+                 <Zap className="w-10 h-10" />
+              </div>
+              <div className="space-y-2">
+                 <h3 className="text-2xl font-bold font-outfit text-primary-navy">No Active Cases</h3>
+                 <p className="text-sm font-medium text-slate-400 uppercase tracking-widest max-w-xs mx-auto">Your dispute ledger is currently empty. Use the Geek assistant to start an audit.</p>
+              </div>
+              <Link href="/dashboard/disputes/new" className="btn-secondary py-3 px-8 text-[10px] font-bold uppercase tracking-widest inline-flex">
+                 Start First Case
+              </Link>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="premium-card p-8 space-y-4 group hover:bg-primary-navy hover:text-white transition-all cursor-pointer">
+                 <div className="w-12 h-12 bg-primary-blue/10 rounded-xl flex items-center justify-center text-primary-blue group-hover:bg-white/10 group-hover:text-white">
+                    <FileText className="w-6 h-6" />
                  </div>
-               ))}
-            </div>
-            <div className="bg-slate-50 p-4 border-t border-slate-100 text-center">
-              <Link href="/dashboard/disputes" className="text-sm font-bold text-primary-blue hover:underline">View all activity</Link>
-            </div>
-          </div>
+                 <h4 className="text-xl font-bold font-outfit">Document Vault</h4>
+                 <p className="text-sm font-medium opacity-60">Securely store your ID, Utility Bills, and Credit Reports.</p>
+                 <Link href="/dashboard/vault" className="flex items-center gap-2 text-xs font-bold text-primary-blue group-hover:text-secondary-teal pt-2">
+                    Access Vault <ArrowRight className="w-4 h-4" />
+                 </Link>
+              </div>
+
+              <div className="premium-card p-8 space-y-4 group hover:bg-secondary-teal hover:text-primary-navy transition-all cursor-pointer">
+                 <div className="w-12 h-12 bg-secondary-teal/10 rounded-xl flex items-center justify-center text-secondary-teal group-hover:bg-primary-navy/10">
+                    <TrendingUp className="w-6 h-6" />
+                 </div>
+                 <h4 className="text-xl font-bold font-outfit">Score Insights</h4>
+                 <p className="text-sm font-medium opacity-60">Analyze how your recent disputes are impacting your trends.</p>
+                 <Link href="/dashboard/disputes" className="flex items-center gap-2 text-xs font-bold text-secondary-teal group-hover:text-primary-navy pt-2">
+                    View Trends <ArrowRight className="w-4 h-4" />
+                 </Link>
+              </div>
+           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           <SectionHeader title="System Status" />
           <div className="premium-card p-6 space-y-6 bg-gradient-to-br from-primary-navy to-primary-navy-muted text-white">
              <div className="flex items-center gap-3">
@@ -122,9 +109,12 @@ function PersonalDashboard({ profile }: { profile: UserProfile | null }) {
                 </div>
              </div>
              <p className="text-sm text-slate-300 leading-relaxed font-medium">Your documents are protected with AES-256 encryption. Only you have access to your private key.</p>
-             <button className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
-                <Clock className="w-4 h-4" /> Check Audit Logs
-             </button>
+             <Link 
+                href="/dashboard/settings/security" 
+                className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 no-underline"
+              >
+                 <Clock className="w-4 h-4" /> Check Audit Logs
+              </Link>
           </div>
 
           <div className="premium-card p-6 space-y-4">
@@ -133,7 +123,7 @@ function PersonalDashboard({ profile }: { profile: UserProfile | null }) {
                 <p className="text-sm font-bold text-primary-blue">Section 609 Rights</p>
                 <p className="text-xs text-slate-500 leading-relaxed font-medium">Learn how to request verification of any negative item appearing on your credit report under the FCRA.</p>
              </div>
-             <Link href="#" className="flex items-center gap-2 text-xs font-bold text-primary-blue hover:underline">
+             <Link href="/dashboard/education/609-rights" className="flex items-center gap-2 text-xs font-bold text-primary-blue hover:underline">
                 Read full resource <ArrowRight className="w-3 h-3" />
              </Link>
           </div>
@@ -143,57 +133,53 @@ function PersonalDashboard({ profile }: { profile: UserProfile | null }) {
   );
 }
 
-function ProDashboard({ profile }: { profile: UserProfile | null }) {
+function ProDashboard({ profile }: { profile: any }) {
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-1">
+    <div className="space-y-10">
+      <div className="flex justify-between items-center">
+        <div>
           <h1 className="text-3xl font-bold font-outfit text-primary-navy">Pro Dashboard</h1>
           <p className="text-slate-500 font-medium tracking-tight">Managing {profile?.name}&apos;s client universe.</p>
         </div>
-        <button className="btn-primary flex items-center gap-2 shadow-2xl">
+        <Link href="/dashboard/clients/new" className="btn-primary flex items-center gap-2 shadow-2xl">
           <PlusCircle className="w-5 h-5" /> New Client
-        </button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Clients" value="28" icon={Users} color="text-primary-blue" bg="bg-primary-blue/10" />
-        <StatCard title="Active Cases" value="84" icon={TrendingUp} color="text-secondary-teal" bg="bg-secondary-teal/10" />
-        <StatCard title="Letters Sent" value="156" icon={FileText} color="text-purple-600" bg="bg-purple-100" />
-        <StatCard title="Revenue (est)" value="$1,240" icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-100" />
+         <StatsCard label="Managed Clients" value="12" icon={Users} color="text-primary-blue" />
+         <StatsCard label="Active Letters" value="48" icon={FileText} color="text-secondary-teal" />
+         <StatsCard label="Response Rate" value="94%" icon={Zap} color="text-amber-500" />
+         <StatsCard label="Audit Fidelity" value="100%" icon={ShieldCheck} color="text-emerald-500" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6">
         <div className="lg:col-span-2 space-y-6">
-          <SectionHeader title="Recent Client Activity" link="/dashboard/clients" />
-          <div className="premium-card">
-            <div className="divide-y divide-slate-100">
-               {[1, 2, 3, 4].map((i) => (
-                 <div key={i} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-all group">
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 font-bold">
-                          JD
-                       </div>
-                       <div>
-                          <p className="font-bold text-slate-800">Jane Doe</p>
-                          <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Added 6 new documents • 2h ago</p>
-                       </div>
+           <SectionHeader title="Recent Client Activity" />
+           <div className="premium-card divide-y divide-slate-100 overflow-hidden">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-all cursor-pointer group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary-blue group-hover:text-white transition-all">
+                      <Users className="w-6 h-6" />
                     </div>
-                    <Link href={`/dashboard/clients/${i}`} className="p-2 rounded-lg bg-slate-100 opacity-0 group-hover:opacity-100 transition-all">
-                       <ArrowRight className="w-5 h-5 text-slate-400" />
-                    </Link>
-                 </div>
-               ))}
-            </div>
-          </div>
+                    <div>
+                      <p className="font-bold text-slate-800">Client Case #{1024 + i}</p>
+                      <p className="text-xs text-slate-500 font-medium">Letter drafted by Geek AI &bull; {3 - i}h ago</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-300" />
+                </div>
+              ))}
+           </div>
         </div>
 
         <div className="space-y-6">
           <SectionHeader title="Quick Actions" />
           <div className="grid grid-cols-1 gap-4">
-             <ActionCard title="Generate Pro Export" icon={Database} subtitle="Bulk download client records" />
-             <ActionCard title="Manage Templates" icon={FileText} subtitle="Update letter definitions" />
-             <ActionCard title="Billing Settings" icon={Settings} subtitle="Invoicing and platform fees" />
+             <ActionCard title="Generate Pro Export" icon={Database} subtitle="Bulk download client records" href="/dashboard/admin/export" />
+             <ActionCard title="Manage Templates" icon={FileText} subtitle="Update letter definitions" href="/dashboard/letters" />
+             <ActionCard title="Billing Settings" icon={Settings} subtitle="Invoicing and platform fees" href="/dashboard/billing" />
           </div>
         </div>
       </div>
@@ -201,67 +187,44 @@ function ProDashboard({ profile }: { profile: UserProfile | null }) {
   );
 }
 
-function AdminDashboard({ profile }: { profile: UserProfile | null }) {
+function StatsCard({ label, value, icon: Icon, color }: { label: string, value: string, icon: any, color: string }) {
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold font-outfit text-primary-navy">Global Administration</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Global Users" value="1,204" icon={Users} color="text-primary-blue" bg="bg-primary-blue/10" />
-        <StatCard title="Pro Accounts" value="42" icon={CheckCircle2} color="text-secondary-teal" bg="bg-secondary-teal/10" />
-        <StatCard title="Total Letters" value="8,492" icon={FileText} color="text-purple-600" bg="bg-purple-100" />
-      </div>
+    <div className="premium-card p-6 space-y-2 border-b-4 border-b-transparent hover:border-b-primary-blue transition-all">
+       <div className="flex justify-between items-center">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+          <Icon className={`w-4 h-4 ${color}`} />
+       </div>
+       <p className="text-2xl font-bold font-outfit text-primary-navy tracking-tight">{value}</p>
     </div>
   );
 }
 
-function StatCard({ title, value, icon: Icon, color, bg }: {
-  title: string;
-  value: string;
-  icon: any; // Lucide icon
-  color: string;
-  bg: string;
-}) {
-  return (
-    <div className="premium-card p-6 flex items-center gap-5">
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${bg} ${color}`}>
-        <Icon className="w-7 h-7" />
-      </div>
-      <div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">{title}</p>
-        <p className="text-3xl font-bold font-outfit text-primary-navy leading-none">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function SectionHeader({ title, link }: { title: string; link?: string }) {
-  return (
-    <div className="flex justify-between items-center px-1">
-      <h3 className="font-bold text-slate-800 text-lg">{title}</h3>
-      {link && (
-        <Link href={link} className="text-sm font-bold text-primary-blue hover:underline flex items-center gap-1">
-          View all <ArrowRight className="w-3 h-3" />
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function ActionCard({ title, icon: Icon, subtitle }: { 
+function ActionCard({ title, icon: Icon, subtitle, href }: { 
   title: string; 
   icon: any; 
-  subtitle: string 
+  subtitle: string;
+  href: string;
 }) {
   return (
-    <div className="premium-card p-4 hover:bg-slate-50 transition-all cursor-pointer group flex items-center gap-4">
-       <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-primary-blue group-hover:text-white transition-all">
-          <Icon className="w-6 h-6" />
-       </div>
-       <div className="flex-1">
-          <p className="font-bold text-slate-800 leading-none mb-1">{title}</p>
-          <p className="text-xs text-slate-500 font-medium">{subtitle}</p>
-       </div>
-       <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary-blue transition-all" />
-    </div>
+    <Link href={href}>
+      <div className="premium-card p-4 hover:bg-slate-50 transition-all cursor-pointer group flex items-center gap-4">
+         <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary-blue group-hover:text-white transition-all">
+            <Icon className="w-6 h-6" />
+         </div>
+         <div className="flex-1">
+            <p className="font-bold text-slate-800 leading-none mb-1">{title}</p>
+            <p className="text-xs text-slate-500 font-medium">{subtitle}</p>
+         </div>
+         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary-blue transition-all" />
+      </div>
+    </Link>
+  );
+}
+
+function ChevronRight({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
   );
 }

@@ -21,14 +21,13 @@
     }
   },
   "hosting": {
+    "site": "fico-geek-6356",
+    "webApp": "1:579395050498:web:566d5e2ab291fd9e8ddb1b",
     "source": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "frameworksBackend": {
-      "region": "us-central1"
-    }
+    ]
   }
 }

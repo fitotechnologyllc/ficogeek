@@ -2,6 +2,14 @@
   "projects": {
     "default": "fico-geek-6356"
   },
-  "targets": {},
+  "targets": {
+    "fico-geek-6356": {
+      "hosting": {
+        "fico-geek": [
+          "fico-geek-6356"
+        ]
+      }
+    }
+  },
   "etags": {}
 }

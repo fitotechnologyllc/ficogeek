@@ -49,7 +49,10 @@ service cloud.firestore {
                       (isDocOwner(userId) && 
                        isUnchanged('role') && 
                        isUnchanged('status') && 
-                       isUnchanged('isPartner')) || 
+                       isUnchanged('isPartner') &&
+                       isUnchanged('twoFactorEnabled') &&
+                       isUnchanged('twoFactorSecretEncrypted') &&
+                       isUnchanged('twoFactorEnrolledAt')) || 
                       isAdminOrOwner()
                     );
       allow delete: if isAdminOrOwner();
