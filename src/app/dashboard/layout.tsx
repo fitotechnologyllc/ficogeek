@@ -79,7 +79,8 @@ export default function DashboardLayout({
     ],
   };
 
-  const currentNav = profile?.role === "pro" ? navItems.pro : profile?.role === "admin" ? navItems.admin : navItems.personal;
+  const isAdminOrOwner = profile?.role === "admin" || profile?.role === "owner";
+  const currentNav = profile?.role === "pro" ? navItems.pro : isAdminOrOwner ? navItems.admin : navItems.personal;
 
   // Add Partner Dashboard to any role if they are a partner
   const finalNav = [...currentNav];

@@ -133,8 +133,8 @@ export default function AIDashboardPage() {
                      <Sparkles className="w-6 h-6" />
                   </div>
                   <div>
-                     <h3 className="font-bold text-primary-navy italic">Primary Logic Interface</h3>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Conversational AI Orchestration</p>
+                     <h3 className="font-bold text-primary-navy italic">FICO Geek Intelligence</h3>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Conversational AI Engine v1.0.5</p>
                   </div>
                </div>
                <div className="flex items-center gap-3">
@@ -200,7 +200,7 @@ export default function AIDashboardPage() {
                   </button>
                </form>
                <p className="mt-6 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest flex items-center justify-center gap-2">
-                  <ShieldCheck className="w-4 h-4" /> Sovereign Logic Intelligence Layer &#183; v1.0.4 Prototype
+                  <ShieldCheck className="w-4 h-4" /> FICO Geek Core Intelligence Layer
                </p>
             </div>
          </div>

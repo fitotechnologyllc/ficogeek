@@ -19,6 +19,13 @@ export async function POST(req: Request) {
     const knowledgeContext = await searchKnowledge(lastUserMessage);
 
     // 2. Execute modern streamText
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("CRITICAL: OPENAI_API_KEY is missing from environment.");
+      return new Response(JSON.stringify({ 
+        error: "AI Service temporarily unavailable. Please contact support." 
+      }), { status: 503 });
+    }
+
     const result = await (streamText as any)({
       model: openai('gpt-4o'),
       system: `

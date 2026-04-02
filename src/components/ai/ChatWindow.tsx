@@ -229,10 +229,10 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
           </button>
         </form>
         <div className="mt-6 flex flex-col items-center gap-3">
-           <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Educational guidance only &bull; Built by Sovereign Logic
-           </div>
+            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+               <ShieldCheck className="w-3.5 h-3.5" />
+               FICO Geek Core Intelligence &bull; Educational Guidance
+            </div>
         </div>
       </div>
     </motion.div>
