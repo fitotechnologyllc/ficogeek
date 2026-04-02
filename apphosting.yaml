@@ -4,3 +4,9 @@
 
 runConfig:
   nodeVersion: 20
+
+env:
+  - variable: NODE_OPTIONS
+    value: "--max-old-space-size=4096"
+    availability:
+      - BUILD
