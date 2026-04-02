@@ -108,7 +108,7 @@ export default function DashboardLayout({
                   <LogoIcon size={32} className="w-8 h-8" />
                 </div>
                 {isSidebarOpen && (
-                  <span className="font-outfit font-bold text-white tracking-wider text-xl">FICO GEEK</span>
+                  <span className="font-outfit font-bold text-white tracking-wider text-xl">GEEK</span>
                 )}
               </div>
 
@@ -164,8 +164,8 @@ export default function DashboardLayout({
               
               <div className="flex items-center gap-4">
                 <div className="hidden sm:flex flex-col items-end mr-4">
-                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Workspace</p>
-                   <p className="text-sm font-bold text-primary-navy">{profile?.role || "Global"} environment</p>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-0.5">PLATFORM CORE</p>
+                   <p className="text-sm font-bold text-primary-navy capitalize italic">Authorized {profile?.role || "Global"}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200" />
               </div>

@@ -14,8 +14,12 @@ export async function updateSubscription(
   let planName: "free" | "premium" | "pro" = "free";
   
   // Mapping Stripe Price IDs to internal plan names
-  if (planId === process.env.STRIPE_PREMIUM_PRICE_ID) planName = "premium";
-  if (planId === process.env.STRIPE_PRO_PRICE_ID) planName = "pro";
+  // Mapping Stripe Price IDs to internal plan names
+  if (process.env.STRIPE_PREMIUM_PRICE_ID && planId === process.env.STRIPE_PREMIUM_PRICE_ID) planName = "premium";
+  else if (process.env.STRIPE_PRO_PRICE_ID && planId === process.env.STRIPE_PRO_PRICE_ID) planName = "pro";
+  else {
+    console.warn(`[SubscriptionSync] Unmapped planId: ${planId}. Defaulting to free.`);
+  }
 
   const updateData: Partial<UserProfile> = {
     stripeCustomerId: customerId,

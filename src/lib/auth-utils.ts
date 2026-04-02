@@ -15,17 +15,21 @@ export async function ensureUserProfile(user: User, role: "personal" | "pro" = "
       console.log(`[Bootstrap] Profile exists for role: ${existingData.role}. Skipping creation.`);
       return existingData;
     }
-  } catch (error: any) {
-    // If the error is due to being offline or unavailable, log it and proceed to update/create
-    const isOffline = error?.code === 'unavailable' || error?.message?.toLowerCase().includes('offline');
-    if (isOffline) {
-      console.warn("[Bootstrap] Firestore is reporting as offline. Attempting background synchronization.", error);
-    } else {
-      // Re-throw if it's a real permission issue or other error
-      console.error("[Bootstrap] Error fetching user profile:", error);
-      throw error;
+    } catch (error: unknown) {
+      const isError = error instanceof Error;
+      const errorCode = isError && "code" in error ? (error as { code: string }).code : "";
+      const errorMessage = isError ? error.message : "";
+
+      // If the error is due to being offline or unavailable, log it and proceed to update/create
+      const isOffline = errorCode === 'unavailable' || errorMessage.toLowerCase().includes('offline');
+      if (isOffline) {
+        console.warn("[Bootstrap] Firestore is reporting as offline. Attempting background synchronization.", error);
+      } else {
+        // Re-throw if it's a real permission issue or other error
+        console.error("[Bootstrap] Error fetching user profile:", error);
+        throw error;
+      }
     }
-  }
 
   // Create profile in Firestore
   const profileData = {

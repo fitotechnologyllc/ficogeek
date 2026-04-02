@@ -15,8 +15,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
-    console.error("[StripePortal] Error:", err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+    console.error("[StripePortal] Error:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

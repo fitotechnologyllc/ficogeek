@@ -4,8 +4,12 @@ if (!process.env.STRIPE_SECRET_KEY) {
   console.warn("[Stripe] Warning: STRIPE_SECRET_KEY is not defined in environment variables.");
 }
 
-// Initialize with a fallback or placeholder to prevent build-time crashes
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
+// Initialize Stripe with strict error handling for production readiness
+if (!process.env.STRIPE_SECRET_KEY && process.env.NODE_ENV === "production") {
+  throw new Error("STRIPE_SECRET_KEY is missing. Billing cannot be initialized.");
+}
+
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2024-04-10" as any,
   typescript: true,
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { 
   ShieldCheck, 
@@ -23,6 +23,10 @@ import { auth, db } from "@/lib/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { logAuditAction } from "@/lib/audit";
 
+interface RecaptchaWindow extends Window {
+  recaptchaVerifier?: any; 
+}
+
 export default function SecurityPage() {
   const { user, profile, mfaEnabled } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -31,6 +35,20 @@ export default function SecurityPage() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [step, setStep] = useState(1); // 1: Input, 2: OTP
+  const [recaptchaInitialized, setRecaptchaInitialized] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !recaptchaInitialized) {
+      const { RecaptchaVerifier } = require("firebase/auth");
+      (window as unknown as RecaptchaWindow).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': () => {
+          console.log("reCAPTCHA solved");
+        }
+      });
+      setRecaptchaInitialized(true);
+    }
+  }, [recaptchaInitialized]);
 
   const startEnrollment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +63,8 @@ export default function SecurityPage() {
         session: session
       };
       const provider = new PhoneAuthProvider(auth);
-      const vid = await provider.verifyPhoneNumber(phoneOpts, (window as any).recaptchaVerifier);
+      const verifier = (window as unknown as RecaptchaWindow).recaptchaVerifier;
+      const vid = await provider.verifyPhoneNumber(phoneOpts, verifier);
       await logAuditAction(
         user.uid,
         profile?.name || "User",
@@ -55,9 +74,10 @@ export default function SecurityPage() {
       );
       setVerificationId(vid);
       setStep(2);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("MFA Error:", err);
-      setStatus({ type: 'error', message: err.message || "Failed to start enrollment." });
+      const errorMessage = err instanceof Error ? err.message : "Failed to start enrollment.";
+      setStatus({ type: 'error', message: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -90,9 +110,10 @@ export default function SecurityPage() {
 
       setStatus({ type: 'success', message: "2FA successfully enabled!" });
       setTimeout(() => window.location.reload(), 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("MFA Verify Error:", err);
-      setStatus({ type: 'error', message: err.message || "Invalid code." });
+      const errorMessage = err instanceof Error ? err.message : "Invalid code.";
+      setStatus({ type: 'error', message: errorMessage });
     } finally {
       setLoading(false);
     }

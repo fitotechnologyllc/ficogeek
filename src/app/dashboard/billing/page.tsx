@@ -36,7 +36,7 @@ export default function BillingPage() {
           email: user?.email,
         }),
       });
-      const data = await res.json();
+      const data = await res.json() as { url?: string };
       if (data.url) {
         window.location.href = data.url;
       }
@@ -56,7 +56,7 @@ export default function BillingPage() {
           customerId: profile?.stripeCustomerId,
         }),
       });
-      const data = await res.json();
+      const data = await res.json() as { url?: string };
       if (data.url) {
         await logAuditAction(
           user!.uid,
@@ -173,7 +173,20 @@ export default function BillingPage() {
   );
 }
 
-function PlanCard({ name, price, description, features, highlight, isCurrent, onSelect, loading, label, disabled }: any) {
+interface PlanCardProps {
+  name: string;
+  price: string;
+  description: string;
+  features: string[];
+  highlight?: boolean;
+  isCurrent: boolean;
+  onSelect?: () => void;
+  loading?: boolean;
+  label: string;
+  disabled?: boolean;
+}
+
+function PlanCard({ name, price, description, features, highlight, isCurrent, onSelect, loading, label, disabled }: PlanCardProps) {
   return (
     <div className={`premium-card p-6 flex flex-col h-full transition-all border-2 ${highlight ? 'border-primary-blue ring-4 ring-primary-blue/5' : 'border-transparent'}`}>
       <div className="space-y-4 mb-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from '@ai-sdk/react';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { 
   Sparkles, 
   History, 
@@ -19,12 +19,34 @@ import { AIProgressTracker } from "@/components/ai/AIProgressTracker";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { logAnalyticsEvent } from "@/lib/analytics";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot, collection, query, where, limit } from "firebase/firestore";
+import { LetterPreview } from "@/components/LetterPreview";
 
 export default function AIDashboardPage() {
-  const { user } = useAuth();
+  return (
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary-blue/10 border-t-primary-blue rounded-full animate-spin" />
+      </div>
+    }>
+      <AIChatContent />
+    </Suspense>
+  );
+}
+
+function AIChatContent() {
+  const { user, profile } = useAuth();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
   const isIntakeMode = mode === "intake";
+
+  useEffect(() => {
+    if (isIntakeMode && user) {
+      logAnalyticsEvent(user.uid, "ai_intake_start");
+    }
+  }, [isIntakeMode, user]);
 
   const [conversationId] = useState(`conv_${Date.now()}`);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -32,30 +54,92 @@ export default function AIDashboardPage() {
 
   const intakeSteps = [
     { id: "bureau", label: "Bureau" },
-    { id: "details", label: "Details" },
+    { id: "account", label: "Account" },
     { id: "reason", label: "Reason" },
-    { id: "supporting", label: "Supporting" },
     { id: "review", label: "Review" },
-    { id: "letter", label: "Draft" }
+    { id: "letter", label: "Done" }
   ];
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [generatedLetters, setGeneratedLetters] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
 
-  const { messages, append, status } = useChat({
+  // Sync with Firestore Intake
+  useEffect(() => {
+    if (!user || !isIntakeMode) return;
+    
+    const intakeId = `intake_${conversationId}`;
+    const unsub = onSnapshot(doc(db, "profiles", user.uid, "intakes", intakeId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setCompletionPercentage(data.completionPercent || 0);
+        
+        // Map percentage to 5 steps
+        if (data.completionPercent >= 100) setCurrentStepIndex(4);
+        else if (data.completionPercent > 75) setCurrentStepIndex(3);
+        else if (data.completionPercent > 50) setCurrentStepIndex(2);
+        else if (data.completionPercent > 25) setCurrentStepIndex(1);
+        else setCurrentStepIndex(0);
+      }
+    });
+
+    return () => unsub();
+  }, [user, conversationId, isIntakeMode]);
+
+  // Sync with Generated Letters
+  useEffect(() => {
+    if (!user || !isIntakeMode) return;
+
+    const q = query(
+      collection(db, "letters"), 
+      where("conversationId", "==", conversationId),
+      limit(3)
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        const letters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setGeneratedLetters(letters);
+        setShowPreview(true);
+      }
+    });
+
+    return () => unsub();
+  }, [user, conversationId, isIntakeMode]);
+
+  const { messages, append, status, setMessages } = useChat({
     api: '/api/ai/chat',
     body: {
       conversationId,
       userId: user?.uid,
       isIntakeMode: isIntakeMode
-    }
+    },
+    initialMessages: isIntakeMode ? [
+      {
+        id: 'initial-geek',
+        role: 'assistant',
+        content: "I can help you create your first dispute letter in just a few steps. Which credit bureau are you working with — Experian, Equifax, TransUnion, or all three?"
+      }
+    ] : []
   } as any) as any;
 
   const isLoading = status === 'submitted' || status === 'streaming';
 
+  const handleReplyClick = async (reply: string) => {
+    if (user) {
+      logAnalyticsEvent(user.uid, "ai_intake_progress", { reply });
+    }
+    await append({ role: 'user', content: reply });
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+    
+    if (user) {
+      logAnalyticsEvent(user.uid, "ai_intake_progress", { length: input.length });
+    }
     
     const userMessage = input;
     setInput("");
@@ -85,7 +169,7 @@ export default function AIDashboardPage() {
              <Sparkles className="w-5 h-5 text-secondary-teal" />
              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none italic">Geek AI Powered</span>
           </div>
-          <h1 className="text-4xl font-bold font-outfit text-primary-navy">FICO Geek AI</h1>
+          <h1 className="text-4xl font-bold font-outfit text-primary-navy">Geek AI</h1>
           <p className="text-slate-500 font-medium tracking-tight">Your dedicated intelligent assistant for platform education and document drafting.</p>
         </div>
         <button className="btn-primary flex items-center gap-2 py-4 px-8 shadow-2xl">
@@ -133,8 +217,8 @@ export default function AIDashboardPage() {
                      <Sparkles className="w-6 h-6" />
                   </div>
                   <div>
-                     <h3 className="font-bold text-primary-navy italic">FICO Geek Intelligence</h3>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Conversational AI Engine v1.0.5</p>
+                     <h3 className="font-bold text-primary-navy italic">GEEK Intelligence</h3>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Conversational AI Engine v1.1.0</p>
                   </div>
                </div>
                <div className="flex items-center gap-3">
@@ -156,26 +240,63 @@ export default function AIDashboardPage() {
                     completionPercentage={completionPercentage} 
                   />
                )}
-               {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8">
-                     <div className="w-24 h-24 bg-slate-50 border border-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-200 rotate-3 shadow-inner">
-                        <MessageSquare className="w-12 h-12" />
-                     </div>
-                     <div className="space-y-4">
-                        <h2 className="text-3xl font-bold font-outfit text-primary-navy">Intelligence Activated</h2>
-                        <p className="text-slate-400 font-medium italic border-l-2 border-slate-100 pl-6 mx-12 text-sm leading-relaxed">&quot;I am ready to help you navigate Section 609, identify account inaccuracies, and draft professional correspondence. What would you like to build today?&quot;</p>
-                     </div>
-                     <div className="grid grid-cols-2 gap-4 w-full">
-                        <QuickBlock label="Learn Section 609" />
-                        <QuickBlock label="Start Dispute Guide" />
-                        <QuickBlock label="App Tutorial" />
-                        <QuickBlock label="Credit Report Info" />
-                     </div>
-                  </div>
+
+               {showPreview && generatedLetters.length > 0 ? (
+                 <motion.div 
+                   initial={{ opacity: 0, y: 20 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="space-y-8"
+                 >
+                    <div className="flex items-center justify-between">
+                       <h2 className="text-2xl font-bold text-primary-navy">Verify Your Dispute</h2>
+                       <button 
+                         onClick={() => setShowPreview(false)}
+                         className="text-sm font-bold text-slate-400 hover:text-primary-blue transition-all"
+                       >
+                         Back to Chat
+                       </button>
+                    </div>
+                    {generatedLetters.map((letter: any) => (
+                       <LetterPreview 
+                         key={letter.id}
+                         content={letter.content}
+                         recipient={letter.bureau}
+                         address="Bureau Address Placeholder" // This will be handled in a real-world scenario with bureau-specific mapping
+                         userName={profile?.name}
+                         userAddress={profile?.address}
+                       />
+                    ))}
+                 </motion.div>
                ) : (
-                  messages.map((m: any) => (
-                     <AIBubble key={m.id} role={m.role as any} content={m.parts ? m.parts.map((p: any, idx: number) => p.type === 'text' ? p.text : null).join('') : (m as any).content} />
-                  ))
+                 <>
+                  {messages.length === 0 && !isIntakeMode ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8">
+                       <div className="w-24 h-24 bg-slate-50 border border-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-200 rotate-3 shadow-inner">
+                          <MessageSquare className="w-12 h-12" />
+                       </div>
+                       <div className="space-y-4">
+                          <h2 className="text-3xl font-bold font-outfit text-primary-navy">Intelligence Activated</h2>
+                          <p className="text-slate-400 font-medium italic border-l-2 border-slate-100 pl-6 mx-12 text-sm leading-relaxed">&quot;I am ready to help you navigate Section 609, identify account inaccuracies, and draft professional correspondence. What would you like to build today?&quot;</p>
+                       </div>
+                       <div className="grid grid-cols-2 gap-4 w-full">
+                          <QuickBlock label="Learn Section 609" />
+                          <QuickBlock label="Start Dispute Guide" />
+                          <QuickBlock label="App Tutorial" />
+                          <QuickBlock label="Credit Report Info" />
+                       </div>
+                    </div>
+                  ) : (
+                    messages.map((m: any) => (
+                       <AIBubble 
+                         key={m.id} 
+                         role={m.role as any} 
+                         content={m.parts ? m.parts.map((p: any, idx: number) => p.type === 'text' ? p.text : null).join('') : (m as any).content} 
+                         quickReplies={(m.id === 'initial-geek') ? ["Experian", "Equifax", "TransUnion", "All Three"] : undefined}
+                         onReplyClick={handleReplyClick}
+                       />
+                    ))
+                  )}
+                 </>
                )}
             </div>
 
@@ -200,7 +321,7 @@ export default function AIDashboardPage() {
                   </button>
                </form>
                <p className="mt-6 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest flex items-center justify-center gap-2">
-                  <ShieldCheck className="w-4 h-4" /> FICO Geek Core Intelligence Layer
+                  <ShieldCheck className="w-4 h-4" /> Geek Core Intelligence Layer
                </p>
             </div>
          </div>

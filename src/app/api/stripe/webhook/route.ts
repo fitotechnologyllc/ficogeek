@@ -3,6 +3,8 @@ import { updateSubscription } from "@/lib/stripe-actions";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
+export const dynamic = "force-dynamic";
+
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: NextRequest) {
@@ -17,9 +19,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 });
     }
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (err: any) {
-    console.error(`[StripeWebhook] Error verifying webhook: ${err.message}`);
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error(`[StripeWebhook] Error verifying webhook: ${errorMessage}`);
+    return NextResponse.json({ error: `Webhook Error: ${errorMessage}` }, { status: 400 });
   }
 
   console.log(`[StripeWebhook] Received event type: ${event.type}`);
@@ -37,7 +40,7 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "customer.subscription.updated": {
-        const subscription = event.data.object as any;
+        const subscription = event.data.object as Stripe.Subscription;
         const uid = subscription.metadata?.firebaseUID;
         if (uid) {
           await updateSubscription(subscription.id, uid);
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as any;
+        const subscription = event.data.object as Stripe.Subscription;
         const uid = subscription.metadata?.firebaseUID;
         if (uid) {
           await updateSubscription(subscription.id, uid);
@@ -62,9 +65,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (err: any) {
-    console.error(`[StripeWebhook] Error processing event: ${err.message}`);
+  } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error(`[StripeWebhook] Error processing event: ${errorMessage}`);
     return NextResponse.json({ error: `Processing failed: ${errorMessage}` }, { status: 500 });
   }
 }

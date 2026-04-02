@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   FileText, 
   Plus, 
@@ -30,7 +30,7 @@ export default function AdminTemplatesPage() {
   const [isEditing, setIsEditing] = useState(false);
   const { user, profile } = useAuth();
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     if (!user || profile?.role !== "admin") return;
     try {
       const q = query(collection(db, "templates"), orderBy("createdAt", "desc"));
@@ -41,11 +41,11 @@ export default function AdminTemplatesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, profile]);
 
   useEffect(() => {
     fetchTemplates();
-  }, [user, profile]);
+  }, [fetchTemplates]);
 
   if (profile?.role !== "admin") {
      return <div className="p-20 text-center font-bold text-slate-400 uppercase tracking-widest italic animate-pulse">Restricted Access Block...</div>;

@@ -34,6 +34,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { logAuditAction } from "@/lib/audit";
+import { formatDisplayDate } from "@/lib/utils";
 
 const CATEGORIES = [
   "All Documents",
@@ -109,8 +110,8 @@ export default function VaultPage() {
         ownerUID: user.uid,
         status: "Active",
         tags: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         uploadedByUID: user.uid
       };
 
@@ -140,7 +141,7 @@ export default function VaultPage() {
     try {
       await updateDoc(doc(db, "documents", docId), { 
         status: newStatus,
-        updatedAt: new Date().toISOString()
+        updatedAt: serverTimestamp()
       });
       
       await logAuditAction(
@@ -311,7 +312,7 @@ export default function VaultPage() {
                              <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
                                 <span className="flex items-center gap-1.5 text-slate-500"><Download className="w-3 h-3" /> {(docItem.size / 1024).toFixed(1)} KB</span>
                                 <span className="w-1 h-1 rounded-full bg-slate-200" />
-                                <span className="flex items-center gap-1.5 text-primary-blue italic"><CheckCircle2 className="w-3 h-3" /> {new Date(docItem.createdAt).toLocaleDateString()}</span>
+                                <span className="flex items-center gap-1.5 text-primary-blue italic"><CheckCircle2 className="w-3 h-3" /> {formatDisplayDate(docItem.createdAt)}</span>
                                 {docItem.tags?.length > 0 && (
                                    <>
                                       <span className="w-1 h-1 rounded-full bg-slate-200" />

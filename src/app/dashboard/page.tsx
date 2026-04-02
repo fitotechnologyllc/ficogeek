@@ -15,17 +15,50 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { ForceAIEntryOverlay } from "@/components/dashboard/ForceAIEntryOverlay";
+import { useState, useEffect } from "react";
+import { UserProfile } from "@/lib/schema";
 
 export default function DashboardPage() {
   const { profile } = useAuth();
+  const [showActivation, setShowActivation] = useState(false);
+
+  useEffect(() => {
+    // Only show activation if onboarding is fully completed but 1st AI session hasn't started
+    const isOnboardingComplete = profile?.onboardingStatus === "completed";
+    
+    if (profile && isOnboardingComplete && !profile.firstAiSessionAt && (profile.role === "personal" || !profile.role)) {
+      const dismissed = localStorage.getItem(`fico_geek_activation_dismissed_${profile.uid}`);
+      if (!dismissed) {
+         setShowActivation(true);
+      }
+    }
+  }, [profile]);
+
+  const handleDismiss = () => {
+    if (profile) {
+      localStorage.setItem(`fico_geek_activation_dismissed_${profile.uid}`, "true");
+    }
+    setShowActivation(false);
+  };
+
   const role = profile?.role || "personal";
 
+  return (
+    <>
+      <DashboardContent role={role} profile={profile} />
+      {showActivation && <ForceAIEntryOverlay onDismiss={handleDismiss} />}
+    </>
+  );
+}
+
+function DashboardContent({ role, profile }: { role: string, profile: UserProfile | null }) {
   if (role === "personal") return <PersonalDashboard profile={profile} />;
   if (role === "pro") return <ProDashboard profile={profile} />;
   return <AdminDashboard profile={profile} />;
 }
 
-function PersonalDashboard({ profile }: { profile: any }) {
+function PersonalDashboard({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -110,7 +143,7 @@ function PersonalDashboard({ profile }: { profile: any }) {
   );
 }
 
-function ProDashboard({ profile }: { profile: any }) {
+function ProDashboard({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -168,7 +201,7 @@ function ProDashboard({ profile }: { profile: any }) {
   );
 }
 
-function AdminDashboard({ profile }: { profile: any }) {
+function AdminDashboard({ profile }: { profile: UserProfile | null }) {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold font-outfit text-primary-navy">Global Administration</h1>
@@ -181,7 +214,13 @@ function AdminDashboard({ profile }: { profile: any }) {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color, bg }: any) {
+function StatCard({ title, value, icon: Icon, color, bg }: {
+  title: string;
+  value: string;
+  icon: any; // Lucide icon
+  color: string;
+  bg: string;
+}) {
   return (
     <div className="premium-card p-6 flex items-center gap-5">
       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${bg} ${color}`}>
@@ -195,7 +234,7 @@ function StatCard({ title, value, icon: Icon, color, bg }: any) {
   );
 }
 
-function SectionHeader({ title, link }: any) {
+function SectionHeader({ title, link }: { title: string; link?: string }) {
   return (
     <div className="flex justify-between items-center px-1">
       <h3 className="font-bold text-slate-800 text-lg">{title}</h3>
@@ -208,7 +247,11 @@ function SectionHeader({ title, link }: any) {
   );
 }
 
-function ActionCard({ title, icon: Icon, subtitle }: any) {
+function ActionCard({ title, icon: Icon, subtitle }: { 
+  title: string; 
+  icon: any; 
+  subtitle: string 
+}) {
   return (
     <div className="premium-card p-4 hover:bg-slate-50 transition-all cursor-pointer group flex items-center gap-4">
        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-primary-blue group-hover:text-white transition-all">

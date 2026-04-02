@@ -30,11 +30,16 @@ export default function OnboardingPage() {
     if (!user) return;
     setLoading(true);
     try {
-      await updateDoc(doc(db, "profiles", user.uid), {
+      // Common update for all intents: Mark as completed to avoid redirect loop
+      const baseUpdate: any = {
+        onboardingStatus: "completed",
+        onboardingCompletedAt: new Date().toISOString(),
         onboardingCurrentStep: intent,
-        onboardingStartedAt: new Date().toISOString(),
+        onboardingStartedAt: profile?.onboardingStartedAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      });
+      };
+
+      await updateDoc(doc(db, "profiles", user.uid), baseUpdate);
 
       if (intent === "dispute") {
         await logAuditAction(user.uid, profile?.name || "User", profile?.role || "personal", "ONBOARDING_STARTED", "User started AI dispute onboarding");
@@ -46,10 +51,6 @@ export default function OnboardingPage() {
         await logAuditAction(user.uid, profile?.name || "User", profile?.role || "personal", "ONBOARDING_STARTED", "User started Upload onboarding");
         router.push("/dashboard/vault?onboarding=true");
       } else {
-        await updateDoc(doc(db, "profiles", user.uid), {
-          onboardingStatus: "completed",
-          onboardingCompletedAt: new Date().toISOString()
-        });
         await logAuditAction(user.uid, profile?.name || "User", profile?.role || "personal", "ONBOARDING_COMPLETED", "User completed onboarding by skipping to dashboard");
         router.push("/dashboard");
       }

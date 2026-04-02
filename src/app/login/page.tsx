@@ -24,8 +24,9 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/dashboard"); // Final redirect logic handled in layout/middleware
-    } catch (err: any) {
-      setError(err.message || "Failed to log in");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to log in";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -48,23 +49,20 @@ export default function LoginPage() {
       
       // Bootstrap Profile
       console.log("[GoogleAuth] Starting profile bootstrap...");
-      try {
-        await ensureUserProfile(result.user);
-        console.log("[GoogleAuth] Profile bootstrap successful.");
-      } catch (bootstrapErr: any) {
-        console.error("[GoogleAuth] Profile bootstrap failed:", bootstrapErr);
-        // We don't necessarily want to block the login if bootstrap fails but Auth succeeded
-        // however, the dashboard might crash if the profile is missing.
-        // We'll let it proceed and hope the AuthContext listener picks it up or retries.
-      }
-      
       console.log("[GoogleAuth] Redirecting to dashboard...");
       router.push("/dashboard");
-    } catch (err: any) {
-      console.error(`[GoogleAuth] Sign-in failure: ${err.code} - ${err.message}`);
+    } catch (err: unknown) {
+      const isError = err instanceof Error;
+      const errorCode = isError && "code" in err ? (err as { code: string }).code : "";
+      const errorMessage = isError ? err.message : "An unexpected error occurred during Google Sign-In.";
+
+      console.error(`[GoogleAuth] Sign-in failure: ${errorCode} - ${errorMessage}`);
       
+      // Secondary Bootstrap Check in case it was a nested error
+      const isBootstrapError = errorMessage.includes("Bootstrap");
+
       // Specific user-friendly mapping
-      switch (err.code) {
+      switch (errorCode) {
         case "auth/popup-blocked":
           setError("The Login popup was blocked by your browser. Please enable popups for this site.");
           break;
@@ -81,7 +79,7 @@ export default function LoginPage() {
           setError("Network connection issue. Please check your internet.");
           break;
         default:
-          setError(err.message || "An unexpected error occurred during Google Sign-In.");
+          setError(errorMessage);
       }
     } finally {
       setLoading(false);

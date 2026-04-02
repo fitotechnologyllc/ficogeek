@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   Sparkles, 
   Settings, 
@@ -27,7 +27,7 @@ export default function AdminAIPage() {
   const [editingDoc, setEditingDoc] = useState<any>({ category: "General", question: "", answer: "" });
   const { user, profile } = useAuth();
 
-  const fetchKnowledge = async () => {
+  const fetchKnowledge = useCallback(async () => {
     if (!user || profile?.role !== "admin") return;
     try {
       const q = query(collection(db, "ai_knowledge"), orderBy("lastUpdated", "desc"));
@@ -38,11 +38,11 @@ export default function AdminAIPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, profile]);
 
   useEffect(() => {
     fetchKnowledge();
-  }, [user, profile]);
+  }, [fetchKnowledge]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

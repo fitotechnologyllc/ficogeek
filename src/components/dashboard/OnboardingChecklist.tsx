@@ -17,7 +17,7 @@ export function OnboardingChecklist() {
     {
       id: "ai_session",
       title: "Start an AI Session",
-      desc: "Meet FICO Geek AI and explore your options.",
+      desc: "Meet Geek AI and explore your options.",
       icon: PlayCircle,
       isComplete: !!profile.firstAiSessionAt,
       href: "/dashboard/ai"

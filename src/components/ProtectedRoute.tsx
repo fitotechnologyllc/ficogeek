@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Loader2, ShieldAlert } from "lucide-react";
 
 export const ProtectedRoute = ({ 
@@ -12,53 +12,81 @@ export const ProtectedRoute = ({
   children: React.ReactNode;
   requiredRole?: "personal" | "pro" | "admin";
 }) => {
-  const { user, profile, loading, isAdminOrOwner, mfaEnabled } = useAuth();
+  const { user, profile, loading, mfaEnabled } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const initialCheckPerformed = useRef(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        console.log("[ProtectedRoute] No user found, redirecting to login.");
-        router.push("/login");
-      } else if (requiredRole && profile?.role !== requiredRole && profile?.role !== "admin" && profile?.role !== "owner") {
-        console.warn(`[ProtectedRoute] Insufficient permissions for role: ${profile?.role || "NONE"}. Redirecting to safety.`);
-        router.push("/dashboard");
-      } 
-      
-      // Onboarding Enforcement for New Users
-      const isOnboardingPage = pathname === "/onboarding";
-      const isPendingOnboarding = profile && profile.onboardingStatus !== "completed";
-      
-      // We only force onboarding for personal/pro roles initially
-      const shouldForceOnboarding = (profile?.role === "personal" || profile?.role === "pro") && isPendingOnboarding && !isOnboardingPage;
+    if (loading) return;
 
-      if (user && shouldForceOnboarding) {
-        console.warn("[ProtectedRoute] Onboarding Pending. Redirecting to guided flow.");
+    const performGuardCheck = () => {
+      // 1. If NO user, go to login
+      if (!user) {
+        console.log("[ProtectedRoute] No session. Redirecting to login.");
+        router.push("/login");
+        return;
+      }
+
+      // 2. If user exists but NO profile, and NOT on onboarding, force onboarding
+      const isOnboardingPage = pathname === "/onboarding";
+      if (!profile && !isOnboardingPage) {
+        console.warn("[ProtectedRoute] No profile found. Redirecting to onboarding.");
         router.push("/onboarding");
+        return;
       }
-      
-      // MFA Enforcement for Owner/Admin
+
+      // 3. Onboarding Enforcement (if profile exists)
+      if (profile && profile.onboardingStatus !== "completed" && !isOnboardingPage && profile.role !== 'admin') {
+        console.warn("[ProtectedRoute] Onboarding incomplete.");
+        router.push("/onboarding");
+        return;
+      }
+
+      // 4. Role-based protection
+      if (requiredRole && profile) {
+        const hasAccess = 
+          profile.role === requiredRole || 
+          profile.role === "admin" || 
+          profile.role === "owner";
+          
+        if (!hasAccess) {
+          console.warn(`[ProtectedRoute] Access denied for role: ${profile.role}`);
+          router.push("/dashboard");
+          return;
+        }
+      }
+
+      // 5. MFA Enforcement
+      const isAdminOrOwner = profile?.role === "admin" || profile?.role === "owner";
       const isSecurityPage = pathname === "/dashboard/settings/security";
-      if (user && isAdminOrOwner && !mfaEnabled && !isSecurityPage && !isOnboardingPage) {
-        console.warn("[ProtectedRoute] MFA Required for Elevated Privileges. Redirecting to security enrollment.");
+      if (isAdminOrOwner && !mfaEnabled && !isSecurityPage && !isOnboardingPage) {
         router.push("/dashboard/settings/security");
+        return;
       }
-    }
-  }, [user, profile, loading, router, requiredRole, isAdminOrOwner, mfaEnabled, pathname]);
+    };
+
+    performGuardCheck();
+    initialCheckPerformed.current = true;
+  }, [user, profile, loading, router, requiredRole, mfaEnabled, pathname]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-10 h-10 animate-spin text-primary-blue" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-primary-blue" />
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Verifying Credentials...</p>
+        </div>
       </div>
     );
   }
 
-  // Show a restricted message if MFA is required but they are NOT on the security page
-  // This handles the gap between the redirect and the page content
+  // Handle high-privilege MFA gap
+  const isAdminOrOwner = profile?.role === "admin" || profile?.role === "owner";
   const isSecurityPage = pathname === "/dashboard/settings/security";
-  if (user && isAdminOrOwner && !mfaEnabled && !isSecurityPage) {
+  const isOnboardingPage = pathname === "/onboarding";
+  
+  if (user && profile && isAdminOrOwner && !mfaEnabled && !isSecurityPage && !isOnboardingPage) {
      return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center space-y-6">
            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
@@ -70,7 +98,7 @@ export const ProtectedRoute = ({
            </div>
            <button 
              onClick={() => router.push("/dashboard/settings/security")}
-             className="btn-primary"
+             className="px-8 py-3 bg-primary-navy text-white rounded-xl font-bold hover:scale-105 transition-all shadow-xl"
            >
               Enable MFA Now
            </button>

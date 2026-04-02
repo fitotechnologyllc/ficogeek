@@ -22,6 +22,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import Link from "next/link";
 import { Dispute } from "@/lib/schema";
+import { formatDisplayDate } from "@/lib/utils";
 
 export default function DisputesPage() {
   const [disputes, setDisputes] = useState<any[]>([]);
@@ -162,7 +163,7 @@ export default function DisputesPage() {
                           <div className="flex items-center gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
                              <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> {d.bureau} Audit</span>
                              <span className="w-1 h-1 rounded-full bg-slate-200" />
-                             <span className="flex items-center gap-1.5 text-primary-navy/40"><History className="w-4 h-4" /> {new Date(d.updatedAt.seconds * 1000).toLocaleDateString()}</span>
+                             <span className="flex items-center gap-1.5 text-primary-navy/40"><History className="w-4 h-4" /> {formatDisplayDate(d.updatedAt)}</span>
                              <span className="w-1 h-1 rounded-full bg-slate-200" />
                              <span className="flex items-center gap-1.5 uppercase bg-slate-100 px-2 py-0.5 rounded text-[8px]">{d.reason.replace(/_/g, ' ')}</span>
                           </div>

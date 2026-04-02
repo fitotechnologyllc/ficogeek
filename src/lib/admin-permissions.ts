@@ -49,8 +49,9 @@ export async function assignOwnerRoleAction(targetUID: string, secret?: string) 
     );
 
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+    return { success: false, error: errorMessage };
   }
 }
 

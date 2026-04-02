@@ -27,8 +27,9 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await ensureUserProfile(userCredential.user, role, name);
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Failed to create account");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create account";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -47,22 +48,26 @@ export default function SignupPage() {
       await ensureUserProfile(result.user, role);
       console.log("Profile check complete, redirecting to dashboard...");
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Google signup error:", err);
       
+      const isError = err instanceof Error;
+      const errorCode = isError && "code" in err ? (err as { code: string }).code : "";
+      const errorMessage = isError ? err.message : "Google sign in failed";
+
       // Check for popup blocked or closed by user
-      if (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-by-user") {
+      if (errorCode === "auth/popup-blocked" || errorCode === "auth/cancelled-by-user") {
         console.log("Popup blocked or closed. Falling back to redirect...");
         try {
           await signInWithRedirect(auth, provider);
           // Note: redirect won't return; page will reload
           return;
-        } catch (redirectErr: any) {
+        } catch (redirectErr: unknown) {
           console.error("Redirect registration error:", redirectErr);
           setError("Multiple registration methods failed. Please check your browser settings.");
         }
       } else {
-        setError(err.message || "Google sign in failed");
+        setError(errorMessage);
       }
       setLoading(false);
     }

@@ -23,11 +23,12 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, doc, updateDoc } from "firebase/firestore";
 import { LetterPreview } from "@/components/LetterPreview";
 import { Letter } from "@/lib/schema";
+import { formatDisplayDate } from "@/lib/utils";
 
 export default function LetterCenterPage() {
-  const [letters, setLetters] = useState<any[]>([]);
+  const [letters, setLetters] = useState<Letter[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLetter, setSelectedLetter] = useState<any>(null);
+  const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "preview">("list");
   const { user } = useAuth();
 
@@ -40,7 +41,7 @@ export default function LetterCenterPage() {
         orderBy("createdAt", "desc")
       );
       const querySnapshot = await getDocs(q);
-      setLetters(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLetters(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Letter)));
     } catch (err) {
       console.error(err);
     } finally {
@@ -63,11 +64,11 @@ export default function LetterCenterPage() {
          </button>
          <LetterPreview 
            content={selectedLetter.content}
-           recipient={selectedLetter.metadata.recipient}
-           address={selectedLetter.metadata.address}
-           date={selectedLetter.metadata.date}
-           subject={selectedLetter.type}
-           userName={user?.displayName || "Sovereign User"}
+          recipient={selectedLetter.metadata?.recipient || "N/A"}
+          address={selectedLetter.metadata?.address || "N/A"}
+          date={selectedLetter.metadata?.date || formatDisplayDate(selectedLetter.createdAt)}
+          subject={selectedLetter.type}
+          userName={user?.displayName || "Sovereign User"}
          />
       </div>
     );
@@ -194,7 +195,7 @@ export default function LetterCenterPage() {
   );
 }
 
-function ActivityItem({ label, time, type }: any) {
+function ActivityItem({ label, time, type }: { label: string; time: string; type: 'SUCCESS' | 'DRAFT' | 'SYSTEM' }) {
   return (
     <div className="flex justify-between items-center group">
        <div className="space-y-0.5">

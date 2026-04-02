@@ -6,9 +6,11 @@ import { Bot, User, Sparkles } from "lucide-react";
 interface AIBubbleProps {
   role: "user" | "assistant" | "system";
   content: string;
+  quickReplies?: string[];
+  onReplyClick?: (reply: string) => void;
 }
 
-export function AIBubble({ role, content }: AIBubbleProps) {
+export function AIBubble({ role, content, quickReplies, onReplyClick }: AIBubbleProps) {
   const isAssistant = role === "assistant";
 
   return (
@@ -38,6 +40,20 @@ export function AIBubble({ role, content }: AIBubbleProps) {
         }`}>
           <ReactMarkdown>{content}</ReactMarkdown>
         </div>
+
+        {isAssistant && quickReplies && quickReplies.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-4">
+             {quickReplies.map((reply, i) => (
+               <button
+                 key={i}
+                 onClick={() => onReplyClick?.(reply)}
+                 className="px-4 py-2 bg-white border border-slate-200 text-primary-blue rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-primary-blue hover:bg-primary-blue/5 transition-all shadow-sm"
+               >
+                 {reply}
+               </button>
+             ))}
+          </div>
+        )}
       </div>
     </div>
   );

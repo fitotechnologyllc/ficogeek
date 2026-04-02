@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   ShieldAlert, 
   Search, 
@@ -27,7 +27,7 @@ export default function AdminAuditPage() {
   const [searchActor, setSearchActor] = useState("");
   const { user, profile } = useAuth();
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     if (!user || profile?.role !== "admin") return;
     try {
       const logsRef = collection(db, "audit_logs");
@@ -44,11 +44,11 @@ export default function AdminAuditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, profile, filterAction]);
 
   useEffect(() => {
     fetchLogs();
-  }, [user, profile, filterAction]);
+  }, [fetchLogs]);
 
   const filteredLogs = logs.filter(log => 
     log.actorName.toLowerCase().includes(searchActor.toLowerCase()) ||

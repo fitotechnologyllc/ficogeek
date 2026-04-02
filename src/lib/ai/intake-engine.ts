@@ -3,8 +3,6 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 
 export const REQUIRED_INTAKE_FIELDS = [
-  "fullName",
-  "address",
   "bureaus",
   "creditorName",
   "accountNumber",
@@ -12,13 +10,13 @@ export const REQUIRED_INTAKE_FIELDS = [
 ];
 
 export async function getOrCreateIntake(
-  uid: string, 
+  userId: string, 
   conversationId: string, 
   isPro: boolean = false, 
   clientId?: string
 ): Promise<AIDisputeIntake> {
   const intakeId = `intake_${conversationId}`;
-  const intakeRef = doc(db, "ai_dispute_intakes", intakeId);
+  const intakeRef = doc(db, "profiles", userId, "intakes", intakeId);
   const intakeSnap = await getDoc(intakeRef);
 
   if (intakeSnap.exists()) {
@@ -26,7 +24,7 @@ export async function getOrCreateIntake(
   }
 
   const newIntake: AIDisputeIntake = {
-    ownerUID: uid,
+    ownerUID: userId,
     clientId: isPro ? clientId : undefined,
     conversationId,
     status: "draft",
@@ -45,10 +43,11 @@ export async function getOrCreateIntake(
 }
 
 export async function updateIntakeData(
+  userId: string,
   intakeId: string, 
   partialData: Partial<AIDisputeIntake["data"]>
 ) {
-  const intakeRef = doc(db, "ai_dispute_intakes", intakeId);
+  const intakeRef = doc(db, "profiles", userId, "intakes", intakeId);
   const intakeSnap = await getDoc(intakeRef);
 
   if (!intakeSnap.exists()) return;

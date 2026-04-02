@@ -8,9 +8,9 @@ export async function upgradeSubscriptionAction(userId: string, newPlan: "premiu
     const amountPaid = newPlan === "premium" ? 29 : newPlan === "pro" ? 99 : 0;
     
     try {
-        await db.runTransaction(async (transaction) => {
+        await db.runTransaction(async (transaction: admin.firestore.Transaction) => {
             const userRef = db.collection("profiles").doc(userId);
-            const userDoc = await transaction.get(userRef);
+            const userDoc = (await transaction.get(userRef)) as unknown as admin.firestore.DocumentSnapshot;
             
             if (!userDoc.exists) throw new Error("User not found");
             
@@ -30,8 +30,8 @@ export async function upgradeSubscriptionAction(userId: string, newPlan: "premiu
                 const referralDoc = referralSnap.docs[0];
                 const partnerUID = referralDoc.data().partnerUID;
                 const partnerRef = db.collection("partners").doc(partnerUID);
-                const partnerDoc = await transaction.get(partnerRef);
-
+                const partnerDoc = (await transaction.get(partnerRef)) as unknown as admin.firestore.DocumentSnapshot;
+                
                 if (partnerDoc.exists) {
                     const partnerData = partnerDoc.data();
                     const commissionAmount = (amountPaid * (partnerData?.commissionRate || 20) / 100);
@@ -69,8 +69,9 @@ export async function upgradeSubscriptionAction(userId: string, newPlan: "premiu
 
         revalidatePath("/dashboard/settings/billing");
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
         console.error("Subscription Upgrade Server Error:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: errorMessage };
     }
 }

@@ -66,8 +66,9 @@ export async function createPromoCodeAction(args: Partial<PromoCode>, creatorUID
     );
 
     return { success: true, id: docRef.id };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -151,8 +152,9 @@ export async function redeemPromoCodeAction(code: string, userUID: string, userN
 
       return { success: true, grantedPlan: promo.targetPlan };
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
     console.error("Redemption Error:", err);
-    return { success: false, error: err.message };
+    return { success: false, error: errorMessage };
   }
 }

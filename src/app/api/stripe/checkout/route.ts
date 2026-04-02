@@ -4,9 +4,17 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const { priceId, customerId, uid, email } = await req.json();
+    let stripePriceId = priceId;
 
-    if (!uid || !email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Mapping internal plan names to their price IDs
+    if (priceId === "premium") {
+      stripePriceId = process.env.STRIPE_PREMIUM_PRICE_ID;
+    } else if (priceId === "pro") {
+      stripePriceId = process.env.STRIPE_PRO_PRICE_ID;
+    }
+
+    if (!stripePriceId || !uid || !email) {
+      return NextResponse.json({ error: "Unauthorized or Invalid Plan" }, { status: 401 });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -14,7 +22,7 @@ export async function POST(req: NextRequest) {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: priceId,
+          price: stripePriceId, // Correctly use the resolved stripePriceId (from env)
           quantity: 1,
         },
       ],
@@ -32,8 +40,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
-    console.error("[StripeCheckout] Error:", err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+    console.error("[StripeCheckout] Error:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

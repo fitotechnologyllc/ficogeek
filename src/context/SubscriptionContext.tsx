@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { upgradeSubscriptionAction } from "@/app/actions/subscription";
 import { logAuditAction } from "@/lib/audit";
 import { getEntitlements, UserEntitlements } from "@/lib/entitlements";
 import { db } from "@/lib/firebase";
@@ -106,24 +105,33 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const upgradePlan = async (newPlan: PlanType) => {
-    if (!profile) return;
+    if (!profile || !user) return;
     
     try {
-      const result = await upgradeSubscriptionAction(profile.id, newPlan as "premium" | "pro");
-      if (!result.success) throw new Error(result.error || "Server-side upgrade failed");
+      setLoading(true);
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceId: newPlan, // Let the backend resolve the real Price ID from env
+          customerId: profile.stripeCustomerId,
+          uid: user.uid,
+          email: user.email
+        }),
+      });
 
-      await logAuditAction(
-        profile.id,
-        profile.name,
-        profile.role,
-        "SENSITIVE_RECORD_UPDATE",
-        `Subscription plan upgraded to ${newPlan}`,
-        "SUBSCRIPTION",
-        profile.id
-      );
+      const { url, error } = await response.json();
+      if (error) throw new Error(error);
+
+      if (url) {
+        window.location.href = url;
+      }
     } catch (e) {
-      console.error("Failed to upgrade plan securely", e);
+      console.error("Failed to initiate Stripe checkout", e);
       throw e;
+    } finally {
+      // Don't set loading to false here if we are redirecting
+      // setLoading(false);
     }
   };
 
