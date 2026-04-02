@@ -24,8 +24,7 @@ export const UserProfileSchema = z.object({
   stripePriceId: z.string().optional(),
   currentPeriodEnd: z.string().optional(),
   cancelAtEnd: z.boolean().optional(),
-  mfaEnabled: z.boolean().optional(),
-  mfaType: z.enum(["sms", "totp"]).optional(),
+
   photoURL: z.string().optional(),
   accountType: z.enum(["customer", "internal"]).optional(),
   billingBypass: z.boolean().optional(),

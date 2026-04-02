@@ -70,10 +70,10 @@ export default function SecurityPage() {
                  </div>
                  <h3 className="font-bold text-slate-800">Security State</h3>
               </div>
-              <p className="text-2xl font-bold text-primary-navy mb-1">Standard</p>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">
-                 Multi-Factor Auth Restricted
-              </p>
+               <p className="text-2xl font-bold text-primary-navy mb-1">Standard</p>
+               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">
+                  Verified Account
+               </p>
            </div>
 
            <div className="premium-card p-6 space-y-4">
