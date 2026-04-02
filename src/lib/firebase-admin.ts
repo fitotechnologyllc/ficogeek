@@ -4,29 +4,35 @@ import * as admin from "firebase-admin";
  * Initialize Firebase Admin SDK safely for both runtime and build time.
  */
 function getAdminApp() {
-  if (admin.apps.length > 0) {
-    return admin.apps[0]!;
+  const APP_NAME = "FICO_GEEK_SERVER";
+  
+  // 1. Return existing if initialized
+  const existingApp = admin.apps.find(a => a?.name === APP_NAME);
+  if (existingApp) return existingApp;
+
+  // 2. Try the default app as a secondary fallback
+  if (admin.apps.length > 0 && !existingApp) {
+    const defaultApp = admin.apps.find(a => a?.name === '[DEFAULT]');
+    if (defaultApp) return defaultApp;
   }
 
   const privateKey = process.env.FIREBASE_SERVER_PRIVATE_KEY?.replace(/\\n/g, '\n');
   const clientEmail = process.env.FIREBASE_SERVER_CLIENT_EMAIL;
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
+  // 3. Handle missing credentials gracefully (especially during build)
   if (!privateKey || !clientEmail || !projectId) {
-    console.warn("[FirebaseAdmin] Missing environment variables for certificate auth. Falling back to simple init.");
-    // This is often needed for build time or static generation bypass
     if (projectId) {
-      return admin.initializeApp({ projectId });
+      try {
+        return admin.initializeApp({ projectId }, APP_NAME);
+      } catch (e) {
+        console.warn("[FirebaseAdmin] Fallback init failed or already exists.");
+      }
     }
-    // Final fallback: try to use default if available, or just log error
-    try {
-      return admin.app();
-    } catch {
-      console.error("[FirebaseAdmin] No apps initialized and no projectId provided.");
-      return null as unknown as admin.app.App;
-    }
+    return admin.apps[0] || null as unknown as admin.app.App;
   }
 
+  // 4. Final Initialization
   try {
     return admin.initializeApp({
       credential: admin.credential.cert({
@@ -34,12 +40,13 @@ function getAdminApp() {
         clientEmail,
         privateKey,
       }),
-    }, "SERVER_CONTEXT_" + Date.now()); // Unique name to avoid race conditions in some SSR environments
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-    console.error("[FirebaseAdmin] Initialization Error:", errorMessage);
-    if (admin.apps.length > 0) return admin.apps[0]!;
-    return null as unknown as admin.app.App;
+    }, APP_NAME);
+  } catch (error: any) {
+    if (error.code === 'app/duplicate-app') {
+      return admin.app(APP_NAME);
+    }
+    console.error("[FirebaseAdmin] Critical Initialization Error:", error.message);
+    return admin.apps[0] || null as unknown as admin.app.App;
   }
 }
 
