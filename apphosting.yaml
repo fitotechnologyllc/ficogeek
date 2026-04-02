@@ -7,6 +7,6 @@ runConfig:
 
 env:
   - variable: NODE_OPTIONS
-    value: "--max-old-space-size=4096"
+    value: "--max-old-space-size=3072"
     availability:
       - BUILD
