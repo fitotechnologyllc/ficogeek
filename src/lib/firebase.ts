@@ -13,7 +13,17 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+let app;
+if (getApps().length > 0) {
+  app = getApp();
+} else if (firebaseConfig.apiKey) {
+  app = initializeApp(firebaseConfig);
+} else {
+  // During build phase, it can fail because env vars are not present.
+  // We return a mock or just avoid initializing if we are on the server without keys.
+  app = initializeApp({ ...firebaseConfig, apiKey: "dummy" }); 
+}
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { streamText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { FICO_GEEK_AI_PERSONA, DISPUTE_INTAKE_PROMPT } from '@/lib/ai/prompts';
