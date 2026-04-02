@@ -42,14 +42,14 @@ export default function AIDashboardPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completionPercentage, setCompletionPercentage] = useState(0);
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, append, status } = useChat({
     api: '/api/ai/chat',
     body: {
       conversationId,
       userId: user?.uid,
       isIntakeMode: isIntakeMode
     }
-  } as any);
+  } as any) as any;
 
   const isLoading = status === 'submitted' || status === 'streaming';
 
@@ -61,9 +61,10 @@ export default function AIDashboardPage() {
     setInput("");
     
     try {
-      await sendMessage({
-        parts: [{ type: 'text', text: userMessage }]
-      } as any);
+      await append({
+        role: "user",
+        content: userMessage
+      });
     } catch (err) {
       console.error("Chat error:", err);
     }
@@ -172,7 +173,7 @@ export default function AIDashboardPage() {
                      </div>
                   </div>
                ) : (
-                  messages.map((m) => (
+                  messages.map((m: any) => (
                      <AIBubble key={m.id} role={m.role as any} content={m.parts ? m.parts.map((p: any, idx: number) => p.type === 'text' ? p.text : null).join('') : (m as any).content} />
                   ))
                )}

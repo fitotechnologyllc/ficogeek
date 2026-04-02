@@ -28,7 +28,7 @@ export function ChatAssistant() {
                 <div className="w-8 h-8 rounded-xl bg-secondary-teal text-primary-navy flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-110 transition-transform">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-sm tracking-tight pr-1">Talk to Geek</span>
+                <span className="font-bold text-sm tracking-tight pr-1">FICO Geek AI</span>
               </div>
             </motion.button>
           )}

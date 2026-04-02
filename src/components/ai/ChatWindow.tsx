@@ -131,13 +131,13 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
                 <div className="w-8 h-8 rounded-xl bg-secondary-teal flex items-center justify-center shadow-lg shadow-secondary-teal/20">
                    <Sparkles className="w-4 h-4 text-slate-900" />
                 </div>
-                <div>
-                   <h3 className="font-bold text-lg font-outfit leading-tight italic">Geek</h3>
-                   <div className="flex items-center gap-1.5 leading-none">
+                 <div>
+                   <h3 className="font-bold text-lg font-outfit leading-tight italic">FICO Geek AI</h3>
+                   <div className="flex items-center gap-1.5 leading-none mt-1">
                       <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{isIntakeMode ? "Guided Intake Active" : "Knowledge Assistant"}</span>
                    </div>
-                </div>
+                 </div>
              </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
@@ -157,7 +157,7 @@ export function ChatWindow({ isOpen, onClose, isIntakeMode = false }: ChatWindow
                <Sparkles className="w-8 h-8" />
             </div>
             <div className="space-y-2">
-               <h4 className="text-xl font-bold text-primary-navy">I am Geek</h4>
+               <h4 className="text-xl font-bold text-primary-navy">I am FICO Geek AI</h4>
                <p className="text-sm font-medium text-slate-400 uppercase tracking-widest leading-relaxed italic border-l-2 border-slate-100 pl-4 mx-8">&quot;I provide educational guidance and help you draft professional dispute correspondence. How can I assist your workflow today?&quot;</p>
             </div>
             
