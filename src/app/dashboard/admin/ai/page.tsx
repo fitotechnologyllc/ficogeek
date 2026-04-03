@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, getDocs, addDoc, updateDoc, doc, deleteDoc, orderBy } from "firebase/firestore";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminAIPage() {
   const [knowledge, setKnowledge] = useState<any[]>([]);
@@ -66,12 +67,12 @@ export default function AdminAIPage() {
     }
   };
 
-
-
   return (
-    <div className="space-y-8 max-w-7xl mx-auto h-full">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <AdminGuard>
+      <div className="space-y-8 max-w-7xl mx-auto">
+        <>
+          {/* Admin Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2">
              <Settings className="w-5 h-5 text-secondary-teal" />
@@ -180,6 +181,7 @@ export default function AdminAIPage() {
             </div>
          </div>
       </div>
+        </>
 
       {/* Seeding Modal */}
       {isEditing && (
@@ -248,6 +250,7 @@ export default function AdminAIPage() {
          </div>
       )}
     </div>
+    </AdminGuard>
   );
 }
 

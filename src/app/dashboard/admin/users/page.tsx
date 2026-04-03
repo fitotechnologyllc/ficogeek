@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, updateDoc, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, addDoc, updateDoc, doc, deleteDoc, orderBy } from "firebase/firestore";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -51,8 +52,9 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <AdminGuard>
+      <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold font-outfit text-primary-navy">User Management</h1>
           <p className="text-slate-500 font-medium tracking-tight">Platform-level control for all personal and pro accounts.</p>
@@ -113,12 +115,12 @@ export default function AdminUsersPage() {
               <tr key={u.id} className="hover:bg-slate-50 transition-all group">
                 <td className="px-6 py-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-500">
-                      {u.name[0]}
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-500 uppercase">
+                      {u.name?.charAt(0) || u.email?.charAt(0) || "?"}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-800">{u.name}</p>
-                      <p className="text-xs font-medium text-slate-400">{u.email}</p>
+                      <p className="font-bold text-slate-800">{u.name || "Unnamed User"}</p>
+                      <p className="text-xs font-medium text-slate-400">{u.email || "No Email Associated"}</p>
                     </div>
                   </div>
                 </td>
@@ -138,7 +140,9 @@ export default function AdminUsersPage() {
                    </div>
                 </td>
                 <td className="px-6 py-6">
-                   <p className="text-sm font-bold text-slate-500">{new Date(u.createdAt).toLocaleDateString()}</p>
+                   <p className="text-sm font-bold text-slate-500">
+                     {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "Legacy Account"}
+                   </p>
                 </td>
                 <td className="px-6 py-6 text-right">
                    <div className="flex justify-end gap-2">
@@ -159,8 +163,9 @@ export default function AdminUsersPage() {
             ))}
           </tbody>
         </table>
-      </div>
-    </div>
+          </div>
+        </div>
+    </AdminGuard>
   );
 }
 

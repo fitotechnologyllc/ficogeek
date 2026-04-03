@@ -88,8 +88,12 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-12 pb-20">
       <div className="space-y-1">
-        <h1 className="text-4xl font-bold font-outfit text-primary-navy">Account Settings</h1>
-        <p className="text-slate-500 font-medium tracking-tight">Manage your professional identity and platform preferences.</p>
+        <div className="flex items-center gap-2 mb-2">
+           <ShieldCheck className="w-5 h-5 text-primary-blue" />
+           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none italic">Sovereign Profile Management</span>
+        </div>
+        <h1 className="text-4xl font-extrabold font-outfit text-primary-navy tracking-tight italic uppercase">Account & Security</h1>
+        <p className="text-slate-500 font-medium tracking-tight">Manage your professional identity, security credentials, and platform preferences.</p>
       </div>
 
       {message && (
@@ -120,22 +124,28 @@ export default function SettingsPage() {
            </div>
 
             <div className="space-y-4">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Navigation</h4>
-              <Link href="/dashboard/settings/security" className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-primary-blue/30 group transition-all">
-                 <div className="flex items-center gap-3">
-                    <Lock className="w-5 h-5 text-slate-400 group-hover:text-primary-blue" />
-                    <span className="text-sm font-bold text-primary-navy">Security</span>
-                 </div>
-                 <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-primary-blue" />
-              </Link>
-              <button className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-primary-blue/30 group transition-all">
-                 <div className="flex items-center gap-3">
-                    <Bell className="w-5 h-5 text-slate-400 group-hover:text-primary-blue" />
-                    <span className="text-sm font-bold text-primary-navy">Notifications</span>
-                 </div>
-                 <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-primary-blue" />
-              </button>
-           </div>
+               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 italic">Security Controls</h4>
+               <Link href="/dashboard/settings/security" className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-primary-blue/30 group transition-all">
+                  <div className="flex items-center gap-3">
+                     <Lock className="w-5 h-5 text-slate-400 group-hover:text-primary-blue" />
+                     <span className="text-sm font-bold text-primary-navy italic uppercase">Vault Security</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-primary-blue" />
+               </Link>
+               <button className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-primary-blue/30 group transition-all">
+                  <div className="flex items-center gap-3">
+                     <Bell className="w-5 h-5 text-slate-400 group-hover:text-primary-blue" />
+                     <span className="text-sm font-bold text-primary-navy italic uppercase">Alert Logic</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-primary-blue" />
+               </button>
+            </div>
+
+            <div className="premium-card p-8 bg-primary-navy text-white space-y-4 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-24 h-24 bg-secondary-teal/10 blur-[30px] -mr-10 -mt-10" />
+               <h4 className="text-[10px] font-bold text-secondary-teal uppercase tracking-widest leading-none italic">Security Protocol</h4>
+               <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-wider italic">Your PII is encrypted using military-grade AES-256 isolation. Ensure your session is secured when accessing from public networks.</p>
+            </div>
         </div>
 
         {/* Form Area */}

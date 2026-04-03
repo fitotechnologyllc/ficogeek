@@ -249,31 +249,42 @@ function AIChatContent() {
                )}
 
                {showPreview && generatedLetters.length > 0 ? (
-                 <motion.div 
-                   initial={{ opacity: 0, y: 20 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="space-y-8"
-                 >
-                    <div className="flex items-center justify-between">
-                       <h2 className="text-2xl font-bold text-primary-navy">Verify Your Dispute</h2>
-                       <button 
-                         onClick={() => setShowPreview(false)}
-                         className="text-sm font-bold text-slate-400 hover:text-primary-blue transition-all"
-                       >
-                         Back to Chat
-                       </button>
-                    </div>
-                    {generatedLetters.map((letter: any) => (
-                       <LetterPreview 
-                         key={letter.id}
-                         content={letter.content}
-                         recipient={letter.bureau}
-                         address="Bureau Address Placeholder" // This will be handled in a real-world scenario with bureau-specific mapping
-                         userName={profile?.name}
-                         userAddress={profile?.address}
-                       />
-                    ))}
-                 </motion.div>
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-10"
+                  >
+                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-primary-blue/5 p-8 rounded-[2.5rem] border border-primary-blue/10">
+                        <div className="space-y-1">
+                           <h2 className="text-2xl font-bold text-primary-navy font-outfit uppercase italic tracking-tight">Dispute Protocol Generated</h2>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Review your legal instrument below before finalizing in the forge.</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <button 
+                             onClick={() => setShowPreview(false)}
+                             className="px-6 py-3 text-[10px] font-bold text-slate-400 hover:text-primary-navy uppercase tracking-widest transition-all italic border border-slate-100 rounded-xl bg-white"
+                           >
+                             Continue Chat
+                           </button>
+                           <Link 
+                             href="/dashboard/letters"
+                             className="btn-primary px-8 py-4 text-[10px] font-bold uppercase tracking-widest italic shadow-xl flex items-center gap-3"
+                           >
+                              Finalize in Forge <ArrowRight className="w-4 h-4" />
+                           </Link>
+                        </div>
+                     </div>
+                     {generatedLetters.map((letter: any) => (
+                        <LetterPreview 
+                          key={letter.id}
+                          content={letter.content}
+                          recipient={letter.bureau}
+                          address="Bureau Address Placeholder"
+                          userName={profile?.name}
+                          userAddress={profile?.address}
+                        />
+                     ))}
+                  </motion.div>
                ) : (
                  <>
                   {messages.length === 0 && !isIntakeMode ? (
@@ -281,16 +292,18 @@ function AIChatContent() {
                        <div className="w-24 h-24 bg-white border border-slate-50 rounded-[2.5rem] flex items-center justify-center text-slate-100 rotate-6 shadow-2xl">
                           <MessageSquare className="w-12 h-12" />
                        </div>
-                       <div className="space-y-4">
-                          <h2 className="text-3xl font-extrabold font-outfit text-primary-navy uppercase italic tracking-tight">Audit Intelligence Online</h2>
-                          <p className="text-slate-400 font-bold italic text-[11px] leading-relaxed uppercase tracking-wider px-12">I am your conversational bridge to Section 609 rights. I can help you identify legal inaccuracies and draft institutional correspondence.</p>
-                       </div>
-                       <div className="grid grid-cols-2 gap-4 w-full">
-                          <QuickBlock label="Learn Section 609" />
-                          <QuickBlock label="Mailing Best Practices" />
-                          <QuickBlock label="What is a FOIA request?" />
-                          <QuickBlock label="Common Bureau Errors" />
-                       </div>
+                        <div className="space-y-4">
+                           <h2 className="text-3xl font-extrabold font-outfit text-primary-navy uppercase italic tracking-tight">Agent Geek Online</h2>
+                           <p className="text-slate-400 font-bold italic text-[11px] leading-relaxed uppercase tracking-wider px-12">
+                             I am your personal credit dispute strategist. I can help you identify report errors, frame legal arguments under the FCRA, and draft powerful dispute letters.
+                           </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 w-full">
+                           <QuickBlock label="Start Dispute Intake" onClick={() => handleReplyClick("I want to start a new dispute intake mission.")} primary />
+                           <QuickBlock label="Analyze Report Item" onClick={() => handleReplyClick("I need help analyzing a specific error on my credit report.")} />
+                           <QuickBlock label="Frame Legal Argument" onClick={() => handleReplyClick("Help me frame a legal argument using FCRA or FDCPA logic.")} />
+                           <QuickBlock label="Audit Mailing Strategy" onClick={() => handleReplyClick("What is the institutional gold standard for mailing disputes?")} />
+                        </div>
                        <div className="pt-4">
                           <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2 italic">
                              <ShieldCheck className="w-4 h-4" /> Hardened SSL Session Engaged
@@ -358,9 +371,14 @@ function RecentThread({ title, date, active = false }: any) {
   );
 }
 
-function QuickBlock({ label }: any) {
+function QuickBlock({ label, onClick, primary = false }: { label: string, onClick?: () => void, primary?: boolean }) {
   return (
-    <div className="p-6 bg-white border border-slate-100 rounded-2xl text-[10px] font-extrabold text-slate-400 uppercase tracking-widest cursor-pointer hover:border-primary-blue hover:text-primary-blue hover:shadow-2xl transition-all flex items-center justify-between group italic">
+    <div 
+      onClick={onClick}
+      className={`p-6 rounded-2xl text-[10px] font-extrabold uppercase tracking-widest cursor-pointer transition-all flex items-center justify-between group italic border-2 ${
+         primary ? "bg-primary-blue/5 border-primary-blue text-primary-blue shadow-lg active:scale-95" : "bg-white border-slate-100 text-slate-400 hover:border-primary-blue hover:text-primary-blue hover:shadow-2xl active:scale-95"
+      }`}
+    >
        <span>{label}</span>
        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
     </div>

@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, orderBy, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, query, getDocs, doc, updateDoc, orderBy } from "firebase/firestore";
+import { AdminGuard } from "@/components/AdminGuard";
 import { PartnerProfile } from "@/lib/schema";
 
 export default function AdminPartnersPage() {
@@ -58,9 +59,9 @@ export default function AdminPartnersPage() {
   };
 
   return (
-    <div className="space-y-10 max-w-7xl mx-auto pb-20">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <AdminGuard>
+      <div className="space-y-12 max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2">
              <ShieldCheck className="w-5 h-5 text-primary-blue" />
@@ -198,7 +199,8 @@ export default function AdminPartnersPage() {
             </tbody>
           </table>
         </div>
+        </div>
       </div>
-    </div>
+    </AdminGuard>
   );
 }

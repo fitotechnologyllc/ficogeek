@@ -33,6 +33,7 @@ import {
   useRouter 
 } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { WorkflowBar } from "@/components/dashboard/WorkflowBar";
 
 export default function DashboardLayout({
   children,
@@ -52,33 +53,33 @@ export default function DashboardLayout({
 
   const navItems = {
     personal: [
-      { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-      { name: "Dispute Center", icon: PlusCircle, href: "/dashboard/disputes" },
-      { name: "Letter Center", icon: FileText, href: "/dashboard/letters" },
-      { name: "Geek AI", icon: Sparkles, href: "/dashboard/ai" },
-      { name: "Document Vault", icon: FolderLock, href: "/dashboard/vault" },
-      { name: "Settings", icon: Settings, href: "/dashboard/settings" },
+      { name: "Mission Control", icon: LayoutDashboard, href: "/dashboard" },
+      { name: "Dispute Hub", icon: PlusCircle, href: "/dashboard/disputes" },
+      { name: "Document Forge", icon: FileText, href: "/dashboard/letters" },
+      { name: "Agent Geek", icon: Sparkles, href: "/dashboard/ai" },
+      { name: "Verification Vault", icon: FolderLock, href: "/dashboard/vault" },
+      { name: "Account & Security", icon: Settings, href: "/dashboard/settings" },
       { name: "Billing", icon: CreditCard, href: "/dashboard/settings/billing" },
     ],
     pro: [
-      { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+      { name: "Mission Control", icon: LayoutDashboard, href: "/dashboard" },
       { name: "Clients", icon: Users, href: "/dashboard/clients" },
-      { name: "Disputes", icon: FileText, href: "/dashboard/disputes" },
-      { name: "Documents", icon: FolderLock, href: "/dashboard/vault" },
-      { name: "Letters", icon: FileText, href: "/dashboard/letters" },
-      { name: "Geek AI", icon: Sparkles, href: "/dashboard/ai" },
+      { name: "Dispute Hub", icon: FileText, href: "/dashboard/disputes" },
+      { name: "Verification Vault", icon: FolderLock, href: "/dashboard/vault" },
+      { name: "Document Forge", icon: FileText, href: "/dashboard/letters" },
+      { name: "Agent Geek", icon: Sparkles, href: "/dashboard/ai" },
       { name: "Billing", icon: CreditCard, href: "/dashboard/settings/billing" },
       { name: "Partner Program", icon: Handshake, href: "/dashboard/partner" },
-      { name: "Settings", icon: Settings, href: "/dashboard/settings" },
+      { name: "Account & Security", icon: Settings, href: "/dashboard/settings" },
     ],
     admin: [
-      { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+      { name: "Mission Control", icon: LayoutDashboard, href: "/dashboard" },
       { name: "Audit Logs", icon: History, href: "/dashboard/admin/audit" },
       { name: "Partners", icon: Handshake, href: "/dashboard/admin/partners" },
       { name: "Templates", icon: Layout, href: "/dashboard/admin/templates" },
       { name: "AI Logic Center", icon: Sparkles, href: "/dashboard/admin/ai" },
       { name: "Users", icon: Users, href: "/dashboard/admin/users" },
-      { name: "Settings", icon: Settings, href: "/dashboard/settings" },
+      { name: "Account & Security", icon: Settings, href: "/dashboard/settings" },
     ],
   };
 
@@ -190,6 +191,10 @@ export default function DashboardLayout({
                 )}
               </div>
             </header>
+
+            {!pathname.startsWith("/dashboard/admin") && !pathname.startsWith("/dashboard/settings") && (
+              <WorkflowBar />
+            )}
 
             <main className="p-4 lg:p-8">
               {children}

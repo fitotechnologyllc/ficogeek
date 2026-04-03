@@ -28,6 +28,7 @@ import { collection, query, getDocs, orderBy, onSnapshot } from "firebase/firest
 import { PromoCode, PromoDuration, PromoStatus } from "@/lib/schema";
 import { createPromoCodeAction } from "@/app/actions/promo";
 import { motion, AnimatePresence } from "framer-motion";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminPromoPage() {
   const [promos, setPromos] = useState<PromoCode[]>([]);
@@ -96,9 +97,10 @@ export default function AdminPromoPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-20">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <AdminGuard>
+      <div className="space-y-8 max-w-7xl mx-auto pb-20">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2">
              <Ticket className="w-5 h-5 text-secondary-teal" />
@@ -283,7 +285,8 @@ export default function AdminPromoPage() {
         )}
       </AnimatePresence>
     </div>
-  );
+  </AdminGuard>
+);
 }
 
 function StatCard({ label, value, icon: Icon, color }: { label: string, value: number|string, icon: any, color: string }) {
