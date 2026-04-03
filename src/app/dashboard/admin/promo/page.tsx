@@ -58,9 +58,7 @@ export default function AdminPromoPage() {
     return () => unsubscribe();
   }, [user, isAdminOrOwner]);
 
-  if (!isAdminOrOwner) {
-    return <div className="p-20 text-center font-bold text-slate-400 uppercase tracking-widest italic animate-pulse">Restricted Access Block...</div>;
-  }
+
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -17,6 +17,7 @@ import {
 import { AIBubble } from "@/components/ai/AIBubble";
 import { AIProgressTracker } from "@/components/ai/AIProgressTracker";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { logAnalyticsEvent } from "@/lib/analytics";
@@ -161,50 +162,56 @@ function AIChatContent() {
   }, [messages]);
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto h-[calc(100vh-180px)] mb-8">
+    <div className="space-y-12 max-w-7xl mx-auto h-[calc(100vh-180px)] mb-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2">
              <Sparkles className="w-5 h-5 text-secondary-teal" />
-             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none italic">Geek AI Powered</span>
+             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none italic">Sovereign Audit Intelligence</span>
           </div>
-          <h1 className="text-4xl font-bold font-outfit text-primary-navy">Geek AI</h1>
-          <p className="text-slate-500 font-medium tracking-tight">Your dedicated intelligent assistant for platform education and document drafting.</p>
+          <h1 className="text-4xl font-extrabold font-outfit text-primary-navy tracking-tight italic uppercase">Agent Geek</h1>
+          <p className="text-slate-500 font-medium tracking-tight">Your intelligent gateway to credit laws, dispute logic, and terminal guidance.</p>
         </div>
-        <button className="btn-primary flex items-center gap-2 py-4 px-8 shadow-2xl">
+        <Link href="/dashboard/ai" className="btn-primary flex items-center gap-3 py-4 px-8 shadow-2xl uppercase tracking-widest text-[10px] font-bold italic">
           <Plus className="w-5 h-5" />
-          <span>New AI Conversation</span>
-        </button>
+          <span>New Audit Session</span>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
          {/* Sidebar: Recent Activity */}
-         <div className="lg:col-span-1 space-y-6 flex flex-col">
+         <div className="lg:col-span-1 space-y-8 flex flex-col">
             <div className="premium-card p-8 flex-1 border-slate-100 overflow-y-auto">
                <div className="flex items-center justify-between mb-8">
-                  <h3 className="font-bold uppercase tracking-widest text-[10px] text-slate-400 flex items-center gap-2 italic">
-                     <History className="w-4 h-4 text-primary-blue" /> Conversation Logs
+                  <h3 className="font-bold uppercase tracking-widest text-[10px] text-slate-400 flex items-center gap-3 italic">
+                     <History className="w-4 h-4 text-primary-blue" /> Audit Timeline
                   </h3>
                </div>
                <div className="space-y-4">
-                  <RecentThread title="Section 609 Rights" date="Today" active />
-                  <RecentThread title="Experian Dispute Preparation" date="Yesterday" />
-                  <RecentThread title="Platform Navigation Help" date="Mar 28" />
+                  <RecentThread title="Section 609 Verification" date="Today" active />
+                  <RecentThread title="Experian Audit Prep" date="Yesterday" />
+                  <RecentThread title="Terminal Protocol" date="Mar 28" />
                </div>
             </div>
 
-            <div className="premium-card p-8 bg-primary-navy text-white relative overflow-hidden shadow-2xl group">
+            <div className="premium-card p-8 space-y-6 bg-slate-50 border-dashed border-2 border-slate-200">
+               <h4 className="text-[10px] font-bold text-primary-navy uppercase tracking-widest italic">Official Resources</h4>
+               <div className="space-y-3">
+                  <ResourceLink label="AnnualCreditReport.com" href="https://www.annualcreditreport.com" />
+                  <ResourceLink label="CFPB Complaint Portal" href="https://www.consumerfinance.gov/complaint/" />
+                  <ResourceLink label="FTC Identity Theft Center" href="https://www.identitytheft.gov" />
+               </div>
+            </div>
+
+            <div className="premium-card p-10 bg-primary-navy text-white relative overflow-hidden shadow-2xl group">
                <div className="absolute top-0 right-0 w-32 h-32 bg-secondary-teal/10 blur-[40px] -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-               <div className="space-y-4 relative z-10">
-                  <h4 className="font-bold flex items-center gap-2">
+               <div className="space-y-6 relative z-10">
+                  <div className="flex items-center gap-3">
                      <ShieldCheck className="w-5 h-5 text-secondary-teal" />
-                     Education First
-                  </h4>
-                  <p className="text-xs text-slate-400 leading-relaxed font-medium italic border-l border-white/20 pl-4">&quot;Our AI provides educational self-help guidance. For official credit reports, visit AnnualCreditReport.com.&quot;</p>
-                  <button className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                     Visit Source <ExternalLink className="w-3 h-3" />
-                  </button>
+                     <h4 className="text-[10px] font-bold text-secondary-teal uppercase tracking-widest italic leading-none">PII Security Advisory</h4>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed font-bold uppercase tracking-wider italic">Never share full SSNs or account numbers in chat. Agent Geek is an educational engine, not a live support agent.</p>
                </div>
             </div>
          </div>
@@ -270,19 +277,24 @@ function AIChatContent() {
                ) : (
                  <>
                   {messages.length === 0 && !isIntakeMode ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8">
-                       <div className="w-24 h-24 bg-slate-50 border border-slate-100 rounded-[2.5rem] flex items-center justify-center text-slate-200 rotate-3 shadow-inner">
+                    <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-10">
+                       <div className="w-24 h-24 bg-white border border-slate-50 rounded-[2.5rem] flex items-center justify-center text-slate-100 rotate-6 shadow-2xl">
                           <MessageSquare className="w-12 h-12" />
                        </div>
                        <div className="space-y-4">
-                          <h2 className="text-3xl font-bold font-outfit text-primary-navy">Intelligence Activated</h2>
-                          <p className="text-slate-400 font-medium italic border-l-2 border-slate-100 pl-6 mx-12 text-sm leading-relaxed">&quot;I am ready to help you navigate Section 609, identify account inaccuracies, and draft professional correspondence. What would you like to build today?&quot;</p>
+                          <h2 className="text-3xl font-extrabold font-outfit text-primary-navy uppercase italic tracking-tight">Audit Intelligence Online</h2>
+                          <p className="text-slate-400 font-bold italic text-[11px] leading-relaxed uppercase tracking-wider px-12">I am your conversational bridge to Section 609 rights. I can help you identify legal inaccuracies and draft institutional correspondence.</p>
                        </div>
                        <div className="grid grid-cols-2 gap-4 w-full">
                           <QuickBlock label="Learn Section 609" />
-                          <QuickBlock label="Start Dispute Guide" />
-                          <QuickBlock label="App Tutorial" />
-                          <QuickBlock label="Credit Report Info" />
+                          <QuickBlock label="Mailing Best Practices" />
+                          <QuickBlock label="What is a FOIA request?" />
+                          <QuickBlock label="Common Bureau Errors" />
+                       </div>
+                       <div className="pt-4">
+                          <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2 italic">
+                             <ShieldCheck className="w-4 h-4" /> Hardened SSL Session Engaged
+                          </p>
                        </div>
                     </div>
                   ) : (
@@ -348,9 +360,18 @@ function RecentThread({ title, date, active = false }: any) {
 
 function QuickBlock({ label }: any) {
   return (
-    <div className="p-6 bg-white border border-slate-100 rounded-3xl text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:border-primary-blue hover:text-primary-blue hover:shadow-xl transition-all flex items-center justify-between group">
+    <div className="p-6 bg-white border border-slate-100 rounded-2xl text-[10px] font-extrabold text-slate-400 uppercase tracking-widest cursor-pointer hover:border-primary-blue hover:text-primary-blue hover:shadow-2xl transition-all flex items-center justify-between group italic">
        <span>{label}</span>
        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
     </div>
+  );
+}
+
+function ResourceLink({ label, href }: { label: string, href: string }) {
+  return (
+     <a href={href} target="_blank" rel="noreferrer" className="flex items-center justify-between group p-2 hover:bg-white rounded-lg transition-all">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic group-hover:text-primary-blue">{label}</span>
+        <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-primary-blue" />
+     </a>
   );
 }

@@ -21,10 +21,11 @@ import { collection, query, getDocs, doc, updateDoc, orderBy } from "firebase/fi
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { profile } = useAuth();
+  const { profile, isAdminOrOwner } = useAuth();
 
   useEffect(() => {
     const fetchUsers = async () => {
+      if (!isAdminOrOwner) return;
       try {
         const q = query(collection(db, "profiles"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);

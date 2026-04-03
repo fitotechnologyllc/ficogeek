@@ -21,7 +21,7 @@ const IV_LENGTH = 16;
 
 /**
  * Encrypts a string using AES-256-GCM.
- * This is used for storing TOTP secrets securely in Firestore.
+ * Used for storing sensitive data securely in Firestore.
  */
 export function encrypt(text: string): string {
   ensureKey();

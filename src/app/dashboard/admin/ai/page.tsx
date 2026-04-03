@@ -25,10 +25,10 @@ export default function AdminAIPage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingDoc, setEditingDoc] = useState<any>({ category: "General", question: "", answer: "" });
-  const { user, profile } = useAuth();
+  const { user, profile, isAdminOrOwner } = useAuth();
 
   const fetchKnowledge = useCallback(async () => {
-    if (!user || profile?.role !== "admin") return;
+    if (!user || !isAdminOrOwner) return;
     try {
       const q = query(collection(db, "ai_knowledge"), orderBy("lastUpdated", "desc"));
       const snapshot = await getDocs(q);
@@ -38,7 +38,7 @@ export default function AdminAIPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, profile]);
+  }, [user, isAdminOrOwner]);
 
   useEffect(() => {
     fetchKnowledge();
@@ -66,9 +66,7 @@ export default function AdminAIPage() {
     }
   };
 
-  if (profile?.role !== "admin") {
-    return <div className="p-20 text-center font-bold text-slate-400 uppercase tracking-widest italic animate-pulse">Access Restricted to Logic Administrators...</div>;
-  }
+
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto h-full">

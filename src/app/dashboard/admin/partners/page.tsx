@@ -24,8 +24,10 @@ export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<PartnerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalAffiliateRevenue, setTotalAffiliateRevenue] = useState(0);
+  const { user, isAdminOrOwner } = useAuth();
 
   const fetchPartners = async () => {
+    if (!isAdminOrOwner) return;
     try {
       const q = query(collection(db, "partners"), orderBy("totalRevenue", "desc"));
       const snap = await getDocs(q);

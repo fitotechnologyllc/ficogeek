@@ -25,10 +25,10 @@ export default function AdminAuditPage() {
   const [loading, setLoading] = useState(true);
   const [filterAction, setFilterAction] = useState("All Actions");
   const [searchActor, setSearchActor] = useState("");
-  const { user, profile } = useAuth();
+  const { user, profile, isAdminOrOwner } = useAuth();
 
   const fetchLogs = useCallback(async () => {
-    if (!user || profile?.role !== "admin") return;
+    if (!user || !isAdminOrOwner) return;
     try {
       const logsRef = collection(db, "audit_logs");
       let q = query(logsRef, orderBy("timestamp", "desc"), limit(100));
@@ -44,7 +44,7 @@ export default function AdminAuditPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, profile, filterAction]);
+  }, [user, isAdminOrOwner, filterAction]);
 
   useEffect(() => {
     fetchLogs();
@@ -55,17 +55,7 @@ export default function AdminAuditPage() {
     log.actorUID.toLowerCase().includes(searchActor.toLowerCase())
   );
 
-  if (profile?.role !== "admin") {
-    return (
-      <div className="p-20 text-center space-y-6">
-         <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto text-red-500 animate-pulse">
-            <Lock className="w-10 h-10" />
-         </div>
-         <h2 className="text-3xl font-bold font-outfit text-primary-navy">Restricted Access</h2>
-         <p className="text-slate-500 max-w-md mx-auto">This terminal is restricted to Sovereign Administrators. Your access attempt has been logged.</p>
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">

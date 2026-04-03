@@ -28,10 +28,10 @@ export default function AdminTemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const { user, profile } = useAuth();
+  const { user, profile, isAdminOrOwner } = useAuth();
 
   const fetchTemplates = useCallback(async () => {
-    if (!user || profile?.role !== "admin") return;
+    if (!user || !isAdminOrOwner) return;
     try {
       const q = query(collection(db, "templates"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
@@ -41,15 +41,13 @@ export default function AdminTemplatesPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, profile]);
+  }, [user, isAdminOrOwner]);
 
   useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
 
-  if (profile?.role !== "admin") {
-     return <div className="p-20 text-center font-bold text-slate-400 uppercase tracking-widest italic animate-pulse">Restricted Access Block...</div>;
-  }
+
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

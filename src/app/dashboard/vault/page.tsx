@@ -37,13 +37,13 @@ import { logAuditAction } from "@/lib/audit";
 import { formatDisplayDate } from "@/lib/utils";
 
 const CATEGORIES = [
-  "All Documents",
-  "Identification",
-  "Proof of Address",
-  "Credit Reports",
-  "Letters",
-  "Bureau Responses",
-  "Other"
+  { name: "All Documents", icon: "Files", hint: "Full archival access to your secure forge." },
+  { name: "Identification", icon: "UserCheck", hint: "Drivers License or Passport. Must be clear/legible." },
+  { name: "Proof of Address", icon: "Home", hint: "Utility bill or Bank statement (Last 60 days)." },
+  { name: "Credit Reports", icon: "BarChart3", hint: "Official PDF exports from AnnualCreditReport.com." },
+  { name: "Letters", icon: "Send", hint: "Drafted and signed dispute correspondences." },
+  { name: "Bureau Responses", icon: "Shield", hint: "Incoming mail from Equifax, Experian, or TransUnion." },
+  { name: "Other", icon: "MoreHorizontal", hint: "Supporting evidence or miscellaneous records." }
 ];
 
 const QUICK_TAGS = ["Sensitive", "Verified", "Pending Review", "High Priority"];
@@ -160,21 +160,30 @@ export default function VaultPage() {
     }
   };
 
+  const getCategoryHint = (catName: string) => {
+    return CATEGORIES.find(c => c.name === catName)?.hint || "";
+  };
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-12 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold font-outfit text-primary-navy">Hardened Vault</h1>
-          <p className="text-slate-500 font-medium tracking-tight">Enterprise-grade document isolation and security.</p>
+          <div className="flex items-center gap-2 mb-2">
+             <ShieldCheck className="w-5 h-5 text-secondary-teal" />
+             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none italic">Sovereign Document Forge & Vault</span>
+          </div>
+          <h1 className="text-4xl font-extrabold font-outfit text-primary-navy tracking-tight italic uppercase">Document Vault</h1>
+          <p className="text-slate-500 font-medium tracking-tight">Enterprise-grade isolation for your sensitive audit evidence.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
            <button 
              onClick={() => setViewMode(viewMode === "active" ? "archived" : "active")}
-             className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all flex items-center gap-2 border ${
-               viewMode === "archived" ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-white text-slate-500 border-slate-200"
+             className={`px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 border italic ${
+               viewMode === "archived" ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-white text-slate-400 border-slate-100 shadow-sm"
              }`}
            >
-              <Archive className="w-4 h-4" /> {viewMode === "archived" ? "Viewing Archive" : "Archives"}
+              <Archive className="w-4 h-4" /> {viewMode === "archived" ? "Viewing Archive" : "Vault Archives"}
            </button>
            <div className="relative group">
               <input 
@@ -184,76 +193,90 @@ export default function VaultPage() {
                 disabled={uploading}
               />
               <button 
-                className="btn-primary flex items-center gap-2 shadow-2xl disabled:opacity-50"
+                className="btn-primary flex items-center gap-3 py-4 px-8 shadow-2xl disabled:opacity-50 uppercase tracking-widest text-[10px] font-bold italic"
                 disabled={uploading}
               >
-                <CloudUpload className="w-5 h-5" /> {uploading ? "Securing..." : "Safe Upload"}
+                <CloudUpload className="w-5 h-5" /> {uploading ? "Securing Forge..." : "Safe Upload"}
               </button>
            </div>
         </div>
       </div>
 
+      {/* VERIFICATION STACK ONBOARDING */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         <VaultModule 
+            title="Verification Stack" 
+            metric="ID + Address"
+            desc="The bureaus REQUIRE clear copies of your ID and proof of residency to process any dispute."
+            status="MANDATORY"
+         />
+         <VaultModule 
+            title="Reporting Engine" 
+            metric="Bureau Exports"
+            desc="Upload your official PDFs from AnnualCreditReport.com to establish your audit baseline."
+            status="ACTION REQUIRED"
+         />
+         <VaultModule 
+            title="Response Archive" 
+            metric="Evidence"
+            desc="Every letter you receive from a bureau must be scanned and stored here to track progress."
+            status="OPERATIONAL"
+         />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-1 space-y-6">
            {/* Category Navigation */}
-           <div className="premium-card p-6 space-y-4">
-              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest flex items-center gap-2">
-                 <Filter className="w-4 h-4 text-primary-blue" /> Browse Categories
+           <div className="premium-card p-8 space-y-6">
+              <h3 className="font-bold text-primary-navy text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 italic">
+                 <Filter className="w-4 h-4 text-primary-blue" /> Forge Categories
               </h3>
-              <div className="space-y-1">
+              <div className="space-y-2">
                  {CATEGORIES.map((cat) => (
                     <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`w-full text-left p-3 rounded-xl font-bold text-sm transition-all flex items-center justify-between group ${
-                        selectedCategory === cat ? "bg-primary-navy text-white shadow-xl shadow-navy-900/10" : "text-slate-500 hover:bg-slate-100"
+                      key={cat.name}
+                      onClick={() => setSelectedCategory(cat.name)}
+                      className={`w-full text-left p-4 rounded-2xl font-bold text-[11px] transition-all flex flex-col gap-1 group border-2 ${
+                        selectedCategory === cat.name ? "bg-primary-navy text-white border-primary-navy shadow-2xl" : "text-slate-500 hover:bg-slate-50 border-transparent"
                       }`}
                     >
-                       {cat}
-                       <span className={`text-[10px] px-2 py-0.5 rounded-full ${selectedCategory === cat ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400"}`}>
-                          {cat === "All Documents" ? documents.length : documents.filter(d => d.category === cat).length}
-                       </span>
+                       <div className="flex items-center justify-between">
+                          <span className="uppercase tracking-widest italic">{cat.name}</span>
+                          <span className={`text-[9px] px-2 py-0.5 rounded-full ${selectedCategory === cat.name ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400"}`}>
+                             {cat.name === "All Documents" ? documents.length : documents.filter(d => d.category === cat.name).length}
+                          </span>
+                       </div>
+                       <p className={`text-[9px] font-medium leading-tight italic ${selectedCategory === cat.name ? "text-slate-400" : "text-slate-400 group-hover:text-slate-500"}`}>
+                          {cat.hint}
+                       </p>
                     </button>
                  ))}
               </div>
            </div>
 
-           {/* Tag Filters */}
-           <div className="premium-card p-6 space-y-4 bg-slate-50/50">
-              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest flex items-center gap-2">
-                 <TagIcon className="w-4 h-4 text-secondary-teal" /> Quick Tags
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                 {QUICK_TAGS.map(tag => (
-                   <span key={tag} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500 hover:border-primary-blue hover:text-primary-blue transition-all cursor-pointer">
-                      {tag}
-                   </span>
-                 ))}
-              </div>
-           </div>
-
            {/* Security Badge */}
-           <div className="premium-card p-6 bg-slate-900 text-white space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-secondary-teal/10 blur-[30px] -mr-8 -mt-8" />
-              <div className="flex items-center gap-2 relative z-10">
-                 <ShieldCheck className="w-5 h-5 text-secondary-teal" />
-                 <p className="text-sm font-bold text-secondary-teal uppercase tracking-widest leading-none">Hardened Encryption</p>
+           <div className="premium-card p-10 bg-primary-navy text-white space-y-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-secondary-teal/10 blur-[40px] -mr-12 -mt-12" />
+              <div className="space-y-4 relative z-10">
+                 <div className="flex items-center gap-3">
+                    <ShieldCheck className="w-5 h-5 text-secondary-teal" />
+                    <p className="text-[10px] font-bold text-secondary-teal uppercase tracking-widest leading-none italic">Retention Policy</p>
+                 </div>
+                 <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase tracking-wider italic">No static URLs. Evidence is encrypted and scoped to your session. Records are archived after 180 days of inactivity.</p>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed font-medium relative z-10">No static URLs generated. Documents are scoped to your session UID. Verified by the Sovereign Ledger.</p>
            </div>
         </div>
 
         <div className="lg:col-span-3 space-y-6">
-           {/* Search and Metadata Controls */}
            <div className="flex flex-col md:flex-row gap-4 items-center">
               <div className="relative flex-1 group">
-                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-blue transition-colors" />
+                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-primary-blue transition-colors" />
                  <input 
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by filename, tag, or category..."
-                  className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-3xl focus:ring-4 focus:ring-primary-blue/5 outline-none font-bold text-slate-700 transition-all shadow-sm"
+                  placeholder="Search vault by filename, tag, or category..."
+                  className="w-full pl-14 pr-6 py-5 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary-blue/5 outline-none font-bold text-slate-700 transition-all shadow-sm placeholder:text-slate-300 italic"
                  />
               </div>
            </div>
@@ -362,4 +385,25 @@ export default function VaultPage() {
       </div>
     </div>
   );
+}
+
+function VaultModule({ title, metric, desc, status }: { title: string, metric: string, desc: string, status: string }) {
+   return (
+      <div className="premium-card p-8 space-y-6 border hover:border-primary-blue transition-all group">
+         <div className="flex justify-between items-start">
+            <div className="space-y-1">
+               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{title}</h3>
+               <p className="text-2xl font-bold text-primary-navy font-outfit uppercase italic leading-none">{metric}</p>
+            </div>
+            <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest italic border ${
+               status === 'MANDATORY' ? 'bg-red-50 text-red-500 border-red-100' : 
+               status === 'ACTION REQUIRED' ? 'bg-amber-50 text-amber-500 border-amber-100' : 
+               'bg-emerald-50 text-emerald-500 border-emerald-100'
+            }`}>
+               {status}
+            </span>
+         </div>
+         <p className="text-[10px] font-bold text-slate-500 leading-relaxed uppercase tracking-wider italic">{desc}</p>
+      </div>
+   );
 }

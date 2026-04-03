@@ -28,7 +28,9 @@ export default function SignupPage() {
       await ensureUserProfile(userCredential.user, role, name);
       router.push("/dashboard");
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create account";
+      const rawMessage = err instanceof Error ? err.message : "Failed to create account";
+      // Strip raw Firebase SDK message prefixes before displaying
+      const errorMessage = rawMessage.replace(/Firebase:\s*/i, "").replace(/\s*\(auth\/[^)]+\)\.*$/, "").trim() || "Failed to create account";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -67,7 +69,9 @@ export default function SignupPage() {
           setError("Multiple registration methods failed. Please check your browser settings.");
         }
       } else {
-        setError(errorMessage);
+        // Strip raw Firebase SDK message prefixes before displaying
+        const cleanMessage = errorMessage.replace(/Firebase:\s*/i, "").replace(/\s*\(auth\/[^)]+\)\.*$/, "").trim() || "An unexpected error occurred. Please try again.";
+        setError(cleanMessage);
       }
       setLoading(false);
     }

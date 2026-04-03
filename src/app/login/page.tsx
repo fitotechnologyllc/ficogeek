@@ -78,8 +78,12 @@ export default function LoginPage() {
         case "auth/network-request-failed":
           setError("Network connection issue. Please check your internet.");
           break;
+        case "auth/operation-not-allowed":
+          setError("This sign-in method is not currently enabled. Please use email/password or contact support.");
+          break;
         default:
-          setError(errorMessage);
+          // Strip raw Firebase SDK message prefixes before displaying
+          setError(errorMessage.replace(/Firebase:\s*/i, "").replace(/\s*\(auth\/[^)]+\)\.*$/, "").trim() || "An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);
